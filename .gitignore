@@ -1,0 +1,61 @@
+# --- Node / Package managers ---
+node_modules/
+# Do NOT ignore lockfiles; commit them for reproducible builds
+# package-lock.json, yarn.lock, pnpm-lock.yaml => keep tracked
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Vite / Build output ---
+dist/
+.vite/
+.vitest/
+
+# --- Tests & Coverage ---
+coverage/
+*.lcov
+.nyc_output/
+
+# --- Env files ---
+.env
+.env.*.local
+# Keep examples tracked
+!.env.example
+!.env.sample
+
+# --- Editors / IDEs ---
+.vscode/
+.idea/
+*.iml
+
+# --- System files ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+
+# --- Caches / Temp ---
+.eslintcache
+.cache/
+.temp/
+.tmp/
+tmp/
+.sass-cache/
+
+# --- Front-end tools (optional) ---
+# Cypress
+cypress/videos/
+cypress/screenshots/
+# Playwright
+playwright-report/
+test-results/
+
+# --- TypeScript artifacts (in case se agrega TS luego) ---
+*.tsbuildinfo
+
