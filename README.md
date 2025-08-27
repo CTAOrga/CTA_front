@@ -1,13 +1,15 @@
 # CTA Front
 
-Frontend en **React + Vite + MUI** (JavaScript, no TypeScript).
+Frontend en **React + Vite + MUI** (JavaScript). Punta a punta con el backend **FastAPI** en `http://127.0.0.1:8000`.
+
+---
 
 ## Requisitos
 
 - **Node.js**: **v20.19+** _o_ **v22.12+**
   > Vite 6+ requiere estas versiones. Con Node 20.11 falla con `crypto.hash is not a function`.
 - **npm**: 10+ (incluido con Node)
-- (Opcional pero recomendado) **nvm** para cambiar de versión de Node según el entorno.
+- (Opcional) **nvm** para cambiar de versión de Node.
 
 ### Instalar/usar Node con nvm
 
@@ -27,8 +29,46 @@ nvm use --lts
 node -v
 ```
 
-> Si estás obligado a usar Node 20, asegurate de que sea **20.19+**:  
+> Si estás obligado a usar Node 20, asegurate de que sea **20.19+**:
 > `nvm install 20.19.0 && nvm use 20.19.0`
+
+---
+
+## Variables de entorno (backend FastAPI)
+
+Creá **.env.local** en la raíz del front con la URL del back:
+
+```
+VITE_API_URL=http://127.0.0.1:8000
+```
+
+En el código, leé con: `import.meta.env.VITE_API_URL`.
+
+> Asegurate de que el back tenga CORS para el host/puerto del front. En el back (`cta_back`) se incluyen por defecto `http://localhost:5173`, `http://127.0.0.1:5173`, `http://localhost:3000`, `http://127.0.0.1:3000`. Si usás otro puerto, agregalo en `CORS_ORIGINS` del `.env` del backend y reinicialo.
+
+### (Alternativa) Proxy en Vite (evita CORS)
+
+Si preferís no usar CORS y consumir como `/api/...`, podés configurar proxy en `vite.config.js`:
+
+```js
+// vite.config.js
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
+    },
+  },
+});
+```
+
+Con esto, en el código llamás `fetch("/api/v1/items/")` y Vite lo redirige al backend.
 
 ---
 
@@ -51,6 +91,96 @@ npm run dev -- --port 5174
 
 ---
 
+## Test punta-a-punta (GET/POST Items)
+
+1. Verificá que el backend está corriendo en `http://127.0.0.1:8000`.
+2. En el front, creá `src/ItemsDemo.jsx`:
+
+```jsx
+import { useEffect, useState } from "react";
+
+const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+
+export default function ItemsDemo() {
+  const [items, setItems] = useState([]);
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  async function loadItems() {
+    setLoading(true);
+    setErr("");
+    try {
+      const r = await fetch(`${API}/api/v1/items/`);
+      if (!r.ok) throw new Error(\`GET /items -> \${r.status}\`);
+      setItems(await r.json());
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function addItem(e) {
+    e.preventDefault();
+    setErr("");
+    try {
+      const r = await fetch(`${API}/api/v1/items/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        throw new Error(\`POST /items -> \${r.status} \${t}\`);
+      }
+      setName("");
+      await loadItems();
+    } catch (e) {
+      setErr(String(e));
+    }
+  }
+
+  useEffect(() => { loadItems(); }, []);
+
+  return (
+    <div style={{ maxWidth: 520, margin: "2rem auto", fontFamily: "system-ui" }}>
+      <h1>Items (FastAPI + MySQL)</h1>
+
+      <form onSubmit={addItem} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <input
+          placeholder="Nombre del item"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={{ flex: 1, padding: 8 }}
+        />
+        <button disabled={!name.trim()}>Agregar</button>
+      </form>
+
+      {err && <p style={{ color: "crimson" }}>Error: {err}</p>}
+      {loading ? <p>Cargando…</p> : (
+        <ul>
+          {items.map((it) => <li key={it.id}>{it.name}</li>)}
+        </ul>
+      )}
+    </div>
+  );
+}
+```
+
+y montalo en `src/App.jsx`:
+
+```jsx
+import ItemsDemo from "./ItemsDemo";
+export default function App() {
+  return <ItemsDemo />;
+}
+```
+
+3. Levantá el front: `npm run dev` y probá en `http://localhost:5173`.
+
+---
+
 ## Build y Preview (producción)
 
 ```bash
@@ -60,19 +190,6 @@ npm run build
 # Probar el build localmente
 npm run preview
 ```
-
----
-
-## Variables de entorno (opcional)
-
-Creá un archivo **.env** (o **.env.local**) en la raíz si necesitás configurar endpoints u otras variables:
-
-```
-VITE_API_URL=http://localhost:3000
-# Agregá aquí otras VITE_*
-```
-
-En el código, usá `import.meta.env.VITE_API_URL`.
 
 ---
 
@@ -102,6 +219,12 @@ En el código, usá `import.meta.env.VITE_API_URL`.
   npm run dev
   ```
 
+- **CORS o red**
+
+  - Confirmá que el back esté en `127.0.0.1:8000` y que `VITE_API_URL` apunte ahí.
+  - Si usás **proxy** en Vite, llamá a `/api/...` (sin host).
+  - Si cambiás puerto/host del front, agregalo en `CORS_ORIGINS` del back y reinicialo.
+
 - **Puerto 5173 ocupado**
 
   ```bash
@@ -109,7 +232,7 @@ En el código, usá `import.meta.env.VITE_API_URL`.
   ```
 
 - **Cambios de versión de Node no se reflejan**  
-  Cerrá y reabrí tu editor/terminal para refrescar el PATH. En Windows, confirmá con:
+  Cerrá y reabrí tu editor/terminal. En Windows:
   ```powershell
   where node
   node -v
