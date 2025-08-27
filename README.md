@@ -1,5 +1,7 @@
 # CTA Front
 
+![Logo del proyecto](./assets/logo.png)
+
 Frontend en **React + Vite + MUI** (JavaScript). Punta a punta con el backend **FastAPI** en `http://127.0.0.1:8000`.
 
 ---
