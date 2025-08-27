@@ -1,6 +1,9 @@
 # CTA Front
 
-![Logo del proyecto](src/assets/logo.png)
+<p align="center">
+  <img src="src/assets/logo.png" alt="CTA – Compra Tu Auto" width="180" />
+</p>
+<h1 align="center">CTA – Compra Tu Auto</h1>
 
 Frontend en **React + Vite + MUI** (JavaScript). Punta a punta con el backend **FastAPI** en `http://127.0.0.1:8000`.
 
