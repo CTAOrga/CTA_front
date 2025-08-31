@@ -1,11 +1,30 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
-import ItemsDemo from "./ItemsDemo";
+import Home from "./pages/Home";
+import About from "./pages/About";
+import MainLayout from "./layouts/MainLayout";
+import ThemeController from "./theme/ThemeController";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
-  return <ItemsDemo />;
+  // Ejemplo: el rol viene de tu auth
+  const [userRole] = useState("admin"); // 'admin' | 'editor' | 'viewer' ...
+  return (
+    <ThemeController role={userRole} initialMode='light'>
+      {({ mode, toggleMode }) => (
+        <>
+          <BrowserRouter>
+            <MainLayout mode={mode} toggleMode={toggleMode} title='Panel'>
+              <Routes>
+                <Route path='/' element={<Home />} />
+                <Route path='/about' element={<About />} />
+              </Routes>
+            </MainLayout>
+          </BrowserRouter>
+        </>
+      )}
+    </ThemeController>
+  );
 }
 
 export default App;

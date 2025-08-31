@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 
 const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
-console.log("API:", API);
-
 export default function ItemsDemo() {
   const [items, setItems] = useState([]);
   const [name, setName] = useState("");
