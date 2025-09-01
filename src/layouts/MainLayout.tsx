@@ -116,7 +116,18 @@ export default function MainLayout({
       <CssBaseline />
 
       {/* TopBar */}
-      <AppBar position='fixed' sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
+      <AppBar
+        position='fixed'
+        color='primary'
+        enableColorOnDark
+        sx={{
+          zIndex: (t) => t.zIndex.drawer + 1,
+          transition: (t) =>
+            t.transitions.create("background-color", {
+              duration: t.transitions.duration.standard,
+            }),
+        }}
+      >
         <Toolbar>
           {!mdUp && (
             <IconButton
