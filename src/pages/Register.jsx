@@ -1,24 +1,23 @@
 import React, { useState } from "react";
 import { TextField, Button, Stack, Typography, Paper } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import {
-  register as apiRegister,
-  login as apiLogin,
-} from "../infra/authService";
+import { register as apiRegister } from "../infra/authService";
+import useAuth from "../infra/useAuth.js";
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const nav = useNavigate();
+  const { login } = useAuth();
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     try {
       await apiRegister({ email, password });
-      // opcional: loguear directo luego de registrar
-      await apiLogin(email, password);
+      const session = await login(email, password);
+      console.log("[Register] session:", session);
       nav("/", { replace: true });
     } catch (err) {
       setError("No se pudo registrar");
