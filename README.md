@@ -44,7 +44,7 @@ node -v
 Creá **.env.local** en la raíz del front con la URL del back:
 
 ```
-VITE_API_URL=http://127.0.0.1:8000
+VITE_API_URL=http://127.0.0.1:8000/api/v1
 ```
 
 En el código, leé con: `import.meta.env.VITE_API_URL`.
