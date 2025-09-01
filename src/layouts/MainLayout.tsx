@@ -13,6 +13,8 @@ import {
   Box,
   CssBaseline,
   Divider,
+  Stack,
+  Button,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import InboxIcon from "@mui/icons-material/Inbox";
@@ -21,8 +23,11 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { Link as RouterLink } from "react-router-dom";
-
+import LoginIcon from "@mui/icons-material/Login";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import useAuth from "../infra/useAuth";
 const drawerWidth = 240;
 
 export default function MainLayout({
@@ -35,6 +40,15 @@ export default function MainLayout({
   const mdUp = useMediaQuery(theme.breakpoints.up("md"));
   const [open, setOpen] = React.useState(false);
   const toggle = () => setOpen((v) => !v);
+  const { isAuthenticated, logout, user } = useAuth() || {};
+  const navigate = useNavigate();
+
+  const handleLogin = () => navigate("/login");
+  const handleSignUp = () => navigate("/register"); // ajustá la ruta si usás /signup
+  const handleLogout = () => {
+    logout?.();
+    navigate("/");
+  };
 
   const drawer = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -59,8 +73,26 @@ export default function MainLayout({
         </ListItemButton>
       </List>
       <Box sx={{ flexGrow: 1 }} />
+      {/* Footer del sidebar: toggle de tema + versión */}
       <Divider />
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 1.5, display: "flex", alignItems: "center" }}>
+        <IconButton
+          onClick={toggleMode}
+          aria-label='Alternar tema'
+          title={mode === "light" ? "Cambiar a oscuro" : "Cambiar a claro"}
+          size='small'
+          sx={{ mr: 1 }}
+        >
+          {mode === "light" ? (
+            <DarkModeIcon fontSize='small' />
+          ) : (
+            <LightModeIcon fontSize='small' />
+          )}
+        </IconButton>
+        <Typography variant='body2'>
+          {mode === "light" ? "Claro" : "Oscuro"}
+        </Typography>
+        <Box sx={{ flexGrow: 1 }} />
         <Typography variant='caption' color='text.secondary'>
           v1.0
         </Typography>
@@ -85,19 +117,52 @@ export default function MainLayout({
               <MenuIcon />
             </IconButton>
           )}
-          <Typography variant='h6' noWrap sx={{ flexGrow: 1 }}>
+          {/* TÍTULO CENTRADO ABSOLUTO */}
+          <Typography
+            variant='h6'
+            noWrap
+            sx={{
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
+              textAlign: "center",
+              pointerEvents: "none", // no bloquea clicks de atrás
+            }}
+          >
             {title}
           </Typography>
 
-          {/* Toggle claro/oscuro */}
-          <IconButton
-            color='inherit'
-            onClick={toggleMode}
-            aria-label='Alternar tema'
-            title={mode === "light" ? "Cambiar a oscuro" : "Cambiar a claro"}
-          >
-            {mode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
-          </IconButton>
+          {/* empuja acciones a la derecha */}
+          <Box sx={{ flexGrow: 1 }} />
+          {/* Botones de auth */}
+          <Stack direction='row' spacing={1}>
+            {!isAuthenticated ? (
+              <>
+                <Button
+                  color='inherit'
+                  startIcon={<LoginIcon />}
+                  onClick={handleLogin}
+                >
+                  Log In
+                </Button>
+                <Button
+                  color='inherit'
+                  startIcon={<PersonAddIcon />}
+                  onClick={handleSignUp}
+                >
+                  Sign Up
+                </Button>
+              </>
+            ) : (
+              <Button
+                color='inherit'
+                startIcon={<LogoutIcon />}
+                onClick={handleLogout}
+              >
+                Log Out
+              </Button>
+            )}
+          </Stack>
         </Toolbar>
       </AppBar>
 
