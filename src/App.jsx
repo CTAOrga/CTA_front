@@ -15,6 +15,9 @@ function App() {
   const { isAuthenticated, roles = [] } = useAuth() ?? {};
   const lower = roles.map((r) => String(r).toLowerCase());
 
+  console.log("Roles:", roles);
+  console.log("IsAutheticated:", isAuthenticated);
+
   const roleForTheme = !isAuthenticated
     ? "guest"
     : lower.includes("admin")
@@ -24,6 +27,8 @@ function App() {
     : lower.includes("agency")
     ? "agency"
     : "guest"; // fallback seguro
+
+  console.log("roleForTheme:", roleForTheme);
 
   return (
     <ThemeController role={roleForTheme} initialMode='light'>

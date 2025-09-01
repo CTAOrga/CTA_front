@@ -1,112 +1,83 @@
-import {
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Typography,
-  Button,
-  Stack,
-  Divider,
-  Paper,
-} from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import InsightsIcon from "@mui/icons-material/Insights";
-import AssignmentIcon from "@mui/icons-material/Assignment";
+import React, { useMemo } from "react";
+import { Typography, Button, Stack, Paper, Chip, Alert } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
+import useAuth from "../infra/useAuth.js";
+
+// Decide un rol “principal” a partir del array de roles
+const getPrimaryRole = (roles = []) => {
+  const L = roles.map((r) => String(r).toLowerCase());
+  if (L.includes("admin")) return "admin";
+  if (L.includes("buyer")) return "buyer";
+  if (L.includes("agency")) return "agency";
+  return "guest";
+};
+
+// Texto/color por rol
+const ROLE_UI = {
+  admin: {
+    label: "Administrador",
+    color: "secondary",
+    message: "Tenés acceso completo al panel.",
+  },
+  buyer: {
+    label: "Compras",
+    color: "success",
+    message: "Gestioná órdenes y compras.",
+  },
+  agency: {
+    label: "Agencia",
+    color: "warning",
+    message: "Accedé a las funciones de agencia.",
+  },
+  guest: {
+    label: "Invitado",
+    color: "default",
+    message: "Estás en modo invitado. Iniciá sesión para más funciones.",
+  },
+};
 
 export default function Home() {
+  const { isAuthenticated, user, roles = [] } = useAuth();
+  const role = useMemo(() => getPrimaryRole(roles), [roles]);
+  const ui = ROLE_UI[role];
   return (
     <Stack spacing={3}>
-      {/* Encabezado */}
       <Typography variant='h4' component='h1'>
-        Bienvenido 👋
-      </Typography>
-      <Typography variant='body1' color='text.secondary'>
-        Esto es una página principal básica con MUI. Personalizá las cards con
-        tus datos reales.
+        {isAuthenticated
+          ? `¡Bienvenido${user?.id ? ` #${user.id}` : ""}!`
+          : "Bienvenido 👋"}
       </Typography>
 
-      {/* Stats / Resumen rápido */}
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper variant='outlined' sx={{ p: 2 }}>
-            <Typography variant='overline' color='text.secondary'>
-              Usuarios activos
-            </Typography>
-            <Typography variant='h5'>128</Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper variant='outlined' sx={{ p: 2 }}>
-            <Typography variant='overline' color='text.secondary'>
-              Pendientes
-            </Typography>
-            <Typography variant='h5'>14</Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper variant='outlined' sx={{ p: 2 }}>
-            <Typography variant='overline' color='text.secondary'>
-              Tareas hoy
-            </Typography>
-            <Typography variant='h5'>6</Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper variant='outlined' sx={{ p: 2 }}>
-            <Typography variant='overline' color='text.secondary'>
-              Errores
-            </Typography>
-            <Typography variant='h5'>0</Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+      <Paper variant='outlined' sx={{ p: 2 }}>
+        <Stack direction='row' spacing={1} alignItems='center'>
+          <Chip
+            label={`Rol: ${ui.label}`}
+            color={ui.color}
+            variant={role === "guest" ? "outlined" : "filled"}
+          />
+          {isAuthenticated ? (
+            <Chip label='Autenticado' color='primary' variant='outlined' />
+          ) : (
+            <Chip label='Invitado' variant='outlined' />
+          )}
+        </Stack>
 
-      {/* Card de acciones */}
-      <Card>
-        <CardContent>
-          <Typography variant='h6'>Acciones rápidas</Typography>
-          <Typography variant='body2' color='text.secondary'>
-            Atajos comunes del día a día.
-          </Typography>
-          <Divider sx={{ my: 2 }} />
-          <Stack direction='row' spacing={1} useFlexGap flexWrap='wrap'>
-            <Button
-              variant='contained'
-              startIcon={<AddIcon />}
-              onClick={() => alert("Crear…")}
-            >
-              Crear item
+        <Typography sx={{ mt: 2 }}>{ui.message}</Typography>
+
+        {!isAuthenticated && (
+          <Alert severity='info' sx={{ mt: 2 }}>
+            Para acceder a tus módulos,&nbsp;
+            <Button component={RouterLink} to='/login' size='small'>
+              iniciá sesión
             </Button>
-            <Button
-              variant='outlined'
-              startIcon={<RefreshIcon />}
-              onClick={() => alert("Refrescar…")}
-            >
-              Refrescar
+            &nbsp;o&nbsp;
+            <Button component={RouterLink} to='/register' size='small'>
+              creá tu cuenta
             </Button>
-            <Button
-              variant='outlined'
-              startIcon={<InsightsIcon />}
-              onClick={() => alert("Ver métricas…")}
-            >
-              Métricas
-            </Button>
-            <Button
-              variant='outlined'
-              startIcon={<AssignmentIcon />}
-              onClick={() => alert("Ir a tareas…")}
-            >
-              Tareas
-            </Button>
-          </Stack>
-        </CardContent>
-        <CardActions sx={{ px: 2, pb: 2 }}>
-          <Button size='small' onClick={() => alert("Ver todo")}>
-            Ver todo
-          </Button>
-        </CardActions>
-      </Card>
+            .
+          </Alert>
+        )}
+      </Paper>
     </Stack>
   );
 }

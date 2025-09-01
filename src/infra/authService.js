@@ -3,11 +3,36 @@ import { jwtDecode } from "jwt-decode";
 
 const TOKEN_KEY = "access_token";
 
+const normalizeRoles = (decodedRoleOrRoles) => {
+  if (!decodedRoleOrRoles) return [];
+  return Array.isArray(decodedRoleOrRoles)
+    ? decodedRoleOrRoles
+    : [String(decodedRoleOrRoles)];
+};
+
 export async function login(email, password) {
   const { data } = await http.post("/auth/login", { email, password });
-  const { token } = data; // <-- el backend debe devolver { token }
+  console.log("Data:", data);
+  //const { token } = data; // <-- el backend debe devolver { token }
+  const token = data?.access_token || data?.token;
+  if (!token) throw new Error("No llegó access_token en el login");
   setToken(token);
-  return getSession(); // devuelve { user, roles, exp }
+  // Construimos la sesión decodificando el JWT
+  const session = getSession();
+
+  // Si la API además mandó role/agency_id, los integramos (por si el JWT no los trajera)
+  if (session) {
+    // `role` puede venir como string; lo normalizamos a array
+    const apiRoles = normalizeRoles(data?.role);
+    // combinamos sin duplicados por las dudas
+    const merged = Array.from(new Set([...(session.roles || []), ...apiRoles]));
+    session.roles = merged;
+    if (data?.agency_id !== undefined) {
+      session.agencyId = data.agency_id;
+    }
+  }
+
+  return session;
 }
 
 export async function register(payload) {
@@ -45,6 +70,7 @@ export function isExpired(token = getToken()) {
 }
 export function getSession() {
   const d = decodeToken();
+  console.log("getSession decoded:", d);
   if (!d) return null;
-  return { user: { id: d.sub }, roles: d.roles, exp: d.exp };
+  return { user: { id: d.sub }, roles: [d.roles], exp: d.exp };
 }

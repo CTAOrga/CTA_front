@@ -18,7 +18,9 @@ const baseTokens = (mode) => ({
 
 export default function buildTheme({ role = "guest", mode = "light" } = {}) {
   const base = baseTokens(mode);
+  console.log("Calculo:", ROLE_TOKENS[role]);
   const roleTokens = ROLE_TOKENS[role] ?? ROLE_TOKENS.guest;
+  console.log("RoleTokens:", roleTokens);
   const merged = deepmerge(base, roleTokens);
   return createTheme(merged);
 }

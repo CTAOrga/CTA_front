@@ -1,18 +1,16 @@
 // src/infra/AuthContext.jsx
-import React, { createContext, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import AuthContext from "./auth-context.js";
 import { login as apiLogin, clearToken, getSession } from "./authService";
 
-export const AuthContext = createContext(null);
-
 export default function AuthProvider({ children }) {
-  const [session, setSession] = useState(() => getSession()); // { user, roles, exp } | null
+  const [session, setSession] = useState(() => getSession());
 
-  useEffect(() => {
-    // si querés validar expiración aquí...
-  }, []);
+  useEffect(() => {}, []);
 
   const login = async (email, password) => {
     const s = await apiLogin(email, password);
+    console.log("[Login] session:", s);
     setSession(s);
     return s;
   };
