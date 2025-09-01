@@ -8,6 +8,8 @@ import AuthProvider from "./infra/AuthContext.jsx";
 import useAuth from "./infra/useAuth.js";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import AgencyCreate from "./pages/AgencyCreate.jsx";
+import RequireAuth from "./routes/RequireAuth.jsx";
 
 function App() {
   // Ejemplo: el rol viene de tu auth
@@ -41,6 +43,14 @@ function App() {
                 <Route path='/about' element={<About />} />
                 <Route path='/login' element={<Login />} />
                 <Route path='/register' element={<Register />} />
+                <Route
+                  path='/admin/agencies/new'
+                  element={
+                    <RequireAuth roles={["admin"]}>
+                      <AgencyCreate />
+                    </RequireAuth>
+                  }
+                />
               </Routes>
             </MainLayout>
           </BrowserRouter>

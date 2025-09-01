@@ -25,6 +25,7 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import LoginIcon from "@mui/icons-material/Login";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import BusinessIcon from "@mui/icons-material/Business";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import useAuth from "../infra/useAuth";
@@ -39,8 +40,9 @@ export default function MainLayout({
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up("md"));
   const [open, setOpen] = React.useState(false);
+  //const { hasRole } = useAuth() || {};
   const toggle = () => setOpen((v) => !v);
-  const { isAuthenticated, logout, user } = useAuth() || {};
+  const { isAuthenticated, logout, user, hasRole } = useAuth() || {};
   const navigate = useNavigate();
 
   const handleLogin = () => navigate("/login");
@@ -65,6 +67,15 @@ export default function MainLayout({
           </ListItemIcon>
           <ListItemText primary='Inicio' />
         </ListItemButton>
+        {/* Solo admins */}
+        {hasRole?.("admin") && (
+          <ListItemButton component={RouterLink} to='/admin/agencies/new'>
+            <ListItemIcon>
+              <BusinessIcon />
+            </ListItemIcon>
+            <ListItemText primary='Nueva agencia' />
+          </ListItemButton>
+        )}
         <ListItemButton component={RouterLink} to='/about'>
           <ListItemIcon>
             <InfoIcon />
