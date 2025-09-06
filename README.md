@@ -274,6 +274,83 @@ Agregá en `package.json` para evitar que otros levanten el proyecto con Node in
 npm i @mui/material @emotion/react @emotion/styled @mui/icons-material react-router-dom
 ```
 
+
+## Build y ejecucion de imagen con Just
+
+- [Just](https://github.com/casey/just#installation) - Ejecutor de comandos similar a Make
+
+### Comandos disponibles
+
+#### 📦 Build de la imagen
+
+Construye la imagen Docker del frontend con la URL del backend configurada.
+
+```bash
+just build [backend_url]
+```
+
+**Parámetros:**
+- `backend_url` (opcional): URL del backend API
+  - **Valor por defecto:** `http://cta_backend:8000`
+
+**Ejemplos:**
+```bash
+# Usar el valor por defecto
+just build
+
+# Especificar una URL personalizada
+just build "http://localhost:8000"
+
+
+
+### 🚀 Ejecutar el contenedor
+
+Ejecuta el contenedor del frontend en el puerto especificado.
+
+```bash
+just run [port] [imagename]
+```
+
+**Parámetros:**
+- `port` (opcional): Puerto donde exponer la aplicación
+  - **Valor por defecto:** `80`
+- `imagename` (opcional): Nombre de la imagen a ejecutar
+  - **Valor por defecto:** `cta_front`
+
+**Ejemplos:**
+```bash
+# Usar valores por defecto (puerto 80, imagen cta_front)
+just run
+
+# Ejecutar en puerto personalizado
+just run "3000"
+
+# Puerto personalizado e imagen personalizada
+just run "3000" "cta_front:latest"
+```
+
+### Flujo de trabajo típico
+
+#### Desarrollo local
+```bash
+# 1. Construir la imagen apuntando al backend local
+just build "http://localhost:8000"
+
+# 2. Ejecutar en puerto 3000
+just run "3000"
+
+# La aplicación estará disponible en http://localhost:3000
+```
+
+
+
+#### Variables de entorno
+
+La aplicación utiliza las siguientes variables de entorno durante el build:
+
+- `VITE_API_URL`: URL del backend API (configurada via build argument)
+
+
 ## Notas
 
 - Este repo **no usa TypeScript**.
