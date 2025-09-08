@@ -9,3 +9,6 @@ build backend_url='http://cta_backend:8000' :
     docker build -t cta_front --build-arg VITE_API_URL={{backend_url}} .
 
 
+# Buildea la imagen productiva
+build_dev backend_url='http://localhost:8000/api/v1' :
+    docker build -t cta_front_dev --build-arg VITE_API_URL={{backend_url}} .
