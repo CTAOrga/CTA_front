@@ -213,6 +213,7 @@ export default function Home() {
                   fullWidth
                   size='small'
                   placeholder='Fiat, Gol, etc.'
+                  inputProps={{ "data-testid": "input-q" }}
                 />
               </Grid>
               <Grid item xs={6} md={2}>
@@ -320,6 +321,7 @@ export default function Home() {
                     variant='contained'
                     onClick={runSearch}
                     disabled={loading}
+                    data-testid='btn-buscar'
                   >
                     {loading ? <CircularProgress size={20} /> : "Buscar"}
                   </Button>
@@ -364,7 +366,7 @@ export default function Home() {
                   {loading &&
                     [...Array(5)].map((_, i) => (
                       <TableRow key={`sk-${i}`}>
-                        <TableCell colSpan={showAgency ? 5 : 4}>
+                        <TableCell colSpan={showAgency ? 7 : 6}>
                           <Skeleton height={24} />
                         </TableCell>
                       </TableRow>
@@ -386,7 +388,12 @@ export default function Home() {
                       const fav = !!r.is_favorite;
 
                       return (
-                        <TableRow hover key={id ?? `${brand}-${model}`}>
+                        <TableRow
+                          hover
+                          key={id ?? `${brand}-${model}`}
+                          data-testid='row-listing'
+                          data-listing-id={id}
+                        >
                           <TableCell>{brand}</TableCell>
                           <TableCell title={r.seller_notes || ""}>
                             {model}
@@ -396,7 +403,11 @@ export default function Home() {
                           <TableCell align='center'>{stock}</TableCell>
 
                           {/* Estrella de estado */}
-                          <TableCell align='center' sx={{ width: 56 }}>
+                          <TableCell
+                            align='center'
+                            sx={{ width: 56 }}
+                            data-testid='cell-fav'
+                          >
                             <Tooltip
                               title={
                                 fav ? "Marcado como favorito" : "No es favorito"
@@ -404,11 +415,16 @@ export default function Home() {
                             >
                               <span>
                                 {fav ? (
-                                  <StarIcon color='warning' fontSize='small' />
+                                  <StarIcon
+                                    color='warning'
+                                    fontSize='small'
+                                    aria-label='fav-true'
+                                  />
                                 ) : (
                                   <StarBorderIcon
                                     color='disabled'
                                     fontSize='small'
+                                    aria-label='fav-false'
                                   />
                                 )}
                               </span>
@@ -424,6 +440,9 @@ export default function Home() {
                               variant={fav ? "outlined" : "contained"}
                               color={fav ? "warning" : "primary"}
                               onClick={() => handleMarkFavorite(id, fav)}
+                              data-testid='btn-fav'
+                              aria-label={`toggle-fav-${id}`}
+                              aria-pressed={fav}
                             >
                               {fav ? "Quitar" : "Marcar"}
                             </Button>
