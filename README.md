@@ -96,7 +96,7 @@ npm run dev -- --port 5174
 
 ---
 
-## Tests E2E con Cypress
+## 🧪 Tests E2E con Cypress
 
 - **Este proyecto incluye pruebas end-to-end (E2E) con Cypress**  
 
