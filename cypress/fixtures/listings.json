@@ -1,0 +1,24 @@
+[
+  {
+    "id": 2,
+    "agency_id": 2,
+    "brand": "Fiat",
+    "model": "Cronos",
+    "current_price_amount": 10500,
+    "current_price_currency": "USD",
+    "stock": 3,
+    "seller_notes": "Pocos km",
+    "is_favorite": false
+  },
+  {
+    "id": 1,
+    "agency_id": 1,
+    "brand": "Chevrolet",
+    "model": "Onix",
+    "current_price_amount": 9200,
+    "current_price_currency": "USD",
+    "stock": 4,
+    "seller_notes": "Muy buen estado",
+    "is_favorite": true
+  }
+]

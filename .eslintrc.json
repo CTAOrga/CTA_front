@@ -1,0 +1,21 @@
+{
+  "plugins": ["cypress"],
+  "overrides": [
+    {
+      "files": ["cypress/**/*.cy.{js,jsx}", "cypress/**/?(*.)cy.js"],
+      "env": {
+        "mocha": true,
+        "node": true,
+        "cypress/globals": true
+      },
+      "extends": ["plugin:cypress/recommended"],
+      "rules": {
+        "no-unused-expressions": "off"
+      }
+    },
+    {
+      "files": ["cypress.config.*", "vite.config.*"],
+      "env": { "node": true }
+    }
+  ]
+}

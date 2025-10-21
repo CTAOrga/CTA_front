@@ -11,6 +11,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test:e2e": "cypress run --e2e",
+    "cy:open": "cypress open",
     "cy:run": "cypress run"
   },
   "dependencies": {

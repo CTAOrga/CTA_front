@@ -43,6 +43,8 @@ export default defineConfig([
         cy: "readonly",
         Cypress: "readonly",
         expect: "readonly",
+        assert: "readonly",
+        chai: "readonly",
       },
     },
   },
