@@ -96,94 +96,73 @@ npm run dev -- --port 5174
 
 ---
 
-## Test punta-a-punta (GET/POST Items)
+## Tests E2E con Cypress
 
-1. Verificá que el backend está corriendo en `http://127.0.0.1:8000`.
-2. En el front, creá `src/ItemsDemo.jsx`:
+- **Este proyecto incluye pruebas end-to-end (E2E) con Cypress**  
 
-```jsx
-import { useEffect, useState } from "react";
+<h2>Requisitos</h2>
 
-const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+```bash
+# 1) Instalar dependencias (de ser necesario)
+npm install
 
-export default function ItemsDemo() {
-  const [items, setItems] = useState([]);
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
+# 2) Levantar la app (en http://localhost:5173)
+npm run dev
+# (o modo producción)
+npm run build && npm run preview
 
-  async function loadItems() {
-    setLoading(true);
-    setErr("");
-    try {
-      const r = await fetch(`${API}/api/v1/items/`);
-      if (!r.ok) throw new Error(\`GET /items -> \${r.status}\`);
-      setItems(await r.json());
-    } catch (e) {
-      setErr(String(e));
-    } finally {
-      setLoading(false);
-    }
-  }
+```
+> Nota (preview): las variables VITE_* se toman en tiempo de build.
+Si cambiás .env.production, ejecutá otra vez:
 
-  async function addItem(e) {
-    e.preventDefault();
-    setErr("");
-    try {
-      const r = await fetch(`${API}/api/v1/items/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      if (!r.ok) {
-        const t = await r.text();
-        throw new Error(\`POST /items -> \${r.status} \${t}\`);
-      }
-      setName("");
-      await loadItems();
-    } catch (e) {
-      setErr(String(e));
-    }
-  }
-
-  useEffect(() => { loadItems(); }, []);
-
-  return (
-    <div style={{ maxWidth: 520, margin: "2rem auto", fontFamily: "system-ui" }}>
-      <h1>Items (FastAPI + MySQL)</h1>
-
-      <form onSubmit={addItem} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <input
-          placeholder="Nombre del item"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          style={{ flex: 1, padding: 8 }}
-        />
-        <button disabled={!name.trim()}>Agregar</button>
-      </form>
-
-      {err && <p style={{ color: "crimson" }}>Error: {err}</p>}
-      {loading ? <p>Cargando…</p> : (
-        <ul>
-          {items.map((it) => <li key={it.id}>{it.name}</li>)}
-        </ul>
-      )}
-    </div>
-  );
-}
+```bash
+npm run build && npm run preview
 ```
 
-y montalo en `src/App.jsx`:
+<h2>Ejecutar Cypress</h2>
 
-```jsx
-import ItemsDemo from "./ItemsDemo";
-export default function App() {
-  return <ItemsDemo />;
-}
+UI interactiva
+```bash
+npm run cy:open
+```
+Abre el runner de Cypress y elegí los specs desde la interfaz.  
+
+<h2>Headless (terminal)</h2>  
+
+```bash
+# Todos los tests E2E
+npm run test:e2e
+# Equivalente
+npm run cy:run
 ```
 
-3. Levantá el front: `npm run dev` y probá en `http://localhost:5173`.
+<h2>Correr un spec puntual</h2>
 
+```bash
+# Con npx
+npx cypress run --e2e --spec "cypress/e2e/home.cy.js"
+# Reutilizando el script (pasando args tras --)
+npm run cy:run -- --e2e --spec "cypress/e2e/favorites.cy.js"
+```
+
+<h2>Solución de problemas</h2>
+
+- **Instalación “limpia” si hay errores de deps:**
+  - **Windows (PowerShell/CMD)**
+
+```bash
+rmdir /s /q node_modules
+del package-lock.json
+npm install
+```
+- **macOS/Linux**
+
+```bash
+
+rm -rf node_modules package-lock.json
+npm install
+
+```
 ---
 
 ## Build y Preview (producción)
@@ -205,7 +184,11 @@ npm run preview
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test:e2e": "cypress run --e2e",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run"
   }
 }
 ```
