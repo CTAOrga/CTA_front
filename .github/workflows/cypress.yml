@@ -1,18 +1,14 @@
-
 name: Cypress Tests
-
 
 on:
   push:
-    branches: [ "main","basic-cypress" ]
+    branches: ["main", "basic-cypress"]
   pull_request:
-    branches: [ "main","basic-cypress" ]
-
+    branches: ["main", "basic-cypress"]
 
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
-
 
     steps:
       - name: Checkout repository
@@ -21,20 +17,35 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' 
+          node-version: "20"
 
       - name: Install dependencies
         uses: bahmutov/npm-install@v1
         with:
-          ci: npm ci 
+          ci: npm ci
 
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
         with:
           start: npm run dev
-          wait-on: 'http://localhost:5173'
+          wait-on: "http://localhost:5173"
+          command: npx cypress run --e2e --config "video=true,screenshotOnRunFailure=true"
           browser: chrome
           # Grabar los resultados en el Dashboard de Cypress (opcional)
         # env:
         #   CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
         #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload screenshots (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+
+      - name: Upload videos (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: cypress/videos
