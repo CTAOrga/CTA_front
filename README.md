@@ -165,6 +165,71 @@ npm install
 ```
 ---
 
+## 💥 Tests de carga - Grafana - K6
+
+### Requisitos (instalación para correr local)
+
+ > Requiere k6 instalado (winget/choco) y tu backend corriendo.
+
+#### Windows (Powershell):
+
+```
+#Recomendado con winget
+winget install grafana.k6
+
+#Con Chocolatey
+choco install k6 -y
+
+#Con Scoop
+scoop install k6
+```
+#### Linux
+#### Debian / Ubuntu
+
+```
+curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+
+sudo apt update && sudo apt install -y k6
+```
+#### macOS
+
+```
+#Homebrew (recomendado)
+brew install k6
+```
+
+#### Verificar:
+
+```
+k6 version
+```
+
+## Correr
+
+#### Windows (Powershell)
+
+```
+# 1) Setear la base de tu API (ajustá el puerto/host si hace falta)
+$env:API_BASE_URL = "http://127.0.0.1:8000/api/v1"
+
+# 2) Ejecutar el test (con export de resumen en json)
+k6 run --summary-export=summary.json .\k6\load-listings.js
+```
+
+#### Linux / macOS (Bash)
+
+```
+# 1) Base de tu API
+API_BASE_URL=http://127.0.0.1:8000/api/v1
+
+# 2) Ejecutar el test (con export de resumen en json)
+k6 run --summary-export=summary.json k6/load-listings.js
+```
+
+---
+
 ## Build y Preview (producción)
 
 ```bash
