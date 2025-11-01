@@ -1,3 +1,4 @@
+/*
 describe("Forzar fallo para verificar artifacts", () => {
   it("debe fallar a propósito", () => {
     // Visita la Home y busca un texto que NO existe
@@ -7,3 +8,4 @@ describe("Forzar fallo para verificar artifacts", () => {
     ); // ❌ va a fallar
   });
 });
+*/

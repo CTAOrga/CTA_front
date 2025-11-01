@@ -1,0 +1,39 @@
+name: k6 Load Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  k6:
+    runs-on: ubuntu-latest
+    env:
+      # Definí esto en Settings → Secrets and variables → Actions → Variables o Secrets
+      # Por ejemplo, tu API de staging:
+      API_BASE_URL: ${{ vars.API_BASE_URL }}
+      # Si tu endpoint de k6 necesitara token:
+      # API_TOKEN: ${{ secrets.API_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Ejecuta k6 con la acción oficial
+      - name: Run k6 (load listings)
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: k6/load-listings.js
+          # Pasamos variables y exportamos summary.json para inspección
+          flags: >
+            --env API_BASE_URL=${{ env.API_BASE_URL }}
+            --summary-export=summary.json
+
+      # Subí el summary como artefacto (útil para mirar métricas post-run)
+      - name: Upload k6 summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-summary
+          path: summary.json

@@ -27,6 +27,17 @@ export default defineConfig([
       "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
     },
   },
+  // ➜ BLOQUE NUEVO: scripts de k6
+  {
+    // ajustá los patrones si tus archivos están en otra carpeta
+    files: ["k6-*.js", "k6/**/*.js", "perf/**/*.js"],
+    languageOptions: {
+      // __ENV es global en el runtime de k6
+      globals: {
+        __ENV: "readonly",
+      },
+    },
+  },
   {
     files: ["cypress/**/*.cy.{js,jsx}", "cypress/**/?(*.)cy.{js,jsx}"],
     plugins: { cypress },
