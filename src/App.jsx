@@ -11,6 +11,7 @@ import Register from "./pages/Register.jsx";
 import AgencyCreate from "./pages/AgencyCreate.jsx";
 import RequireAuth from "./routes/RequireAuth.jsx";
 import ListingDetailPage from "./pages/ListingDetailPage.jsx";
+import MyPurchases from "./pages/MyPurchases.jsx";
 
 function App() {
   // Ejemplo: el rol viene de tu auth
@@ -49,6 +50,14 @@ function App() {
                   element={
                     <RequireAuth roles={["buyer"]}>
                       <ListingDetailPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/my-purchases'
+                  element={
+                    <RequireAuth roles={["buyer"]}>
+                      <MyPurchases />
                     </RequireAuth>
                   }
                 />

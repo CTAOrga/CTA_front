@@ -25,6 +25,7 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import LoginIcon from "@mui/icons-material/Login";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import BusinessIcon from "@mui/icons-material/Business";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
@@ -74,6 +75,14 @@ export default function MainLayout({
               <BusinessIcon />
             </ListItemIcon>
             <ListItemText primary='Nueva agencia' />
+          </ListItemButton>
+        )}
+        {hasRole?.("buyer") && (
+          <ListItemButton component={RouterLink} to='/my-purchases'>
+            <ListItemIcon>
+              <ShoppingBagIcon />
+            </ListItemIcon>
+            <ListItemText primary='Mis compras' />
           </ListItemButton>
         )}
         <ListItemButton component={RouterLink} to='/about'>

@@ -10,6 +10,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
+import { createPurchase } from "../infra/purchasesService.js";
 
 export default function ListingDetail() {
   const { id } = useParams();
@@ -50,13 +51,40 @@ export default function ListingDetail() {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  // 👉 Acá después vamos a enganchar POST /purchases
-  const handleBuy = () => {
-    setSnackbar({
-      open: true,
-      message: "Comprar: acá vamos a llamar a POST /purchases",
-      severity: "success",
-    });
+  const handleBuy = async () => {
+    if (!listing) return;
+
+    try {
+      const data = await createPurchase({
+        listingId: listing.id,
+        quantity: 1,
+      });
+
+      setSnackbar({
+        open: true,
+        message: "Compra realizada con éxito",
+        severity: "success",
+      });
+
+      // Actualizar stock en la UI sin recargar
+      setListing((prev) =>
+        prev
+          ? {
+              ...prev,
+              stock: prev.stock - data.quantity,
+            }
+          : prev
+      );
+    } catch (error) {
+      console.error("Error al comprar:", error);
+      const msg =
+        error?.response?.data?.detail || "No se pudo realizar la compra";
+      setSnackbar({
+        open: true,
+        message: msg,
+        severity: "error",
+      });
+    }
   };
 
   if (loading) {
