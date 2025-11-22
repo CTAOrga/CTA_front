@@ -3,6 +3,11 @@ import http from "./http";
 const num = (v) => (v === "" || v == null ? undefined : Number(v));
 const str = (v) => (v === "" ? undefined : v);
 
+export async function getListingById(id) {
+  const response = await http.get(`/listings/${id}`);
+  return response.data;
+}
+
 export async function searchListings({
   q,
   brand,

@@ -30,6 +30,7 @@ import { searchListings } from "../infra/listingsService.js";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import StarIcon from "@mui/icons-material/Star";
 import { addFavorite, removeFavorite } from "../infra/favoritesService.js";
+import { useNavigate } from "react-router-dom";
 
 // Decide un rol “principal” a partir del array de roles
 const getPrimaryRole = (roles = []) => {
@@ -76,6 +77,7 @@ export default function Home() {
   const { isAuthenticated, roles = [] } = useAuth();
   const role = useMemo(() => getPrimaryRole(roles), [roles]);
   const ui = ROLE_UI[role];
+  const navigate = useNavigate();
 
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
@@ -158,7 +160,9 @@ export default function Home() {
     }
   };
 
-  console.log("Rows:", rows);
+  const goToDetail = (id) => {
+    navigate(`/listings/${id}`);
+  };
 
   return (
     <>
@@ -445,6 +449,20 @@ export default function Home() {
                               aria-pressed={fav}
                             >
                               {fav ? "Quitar" : "Marcar"}
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            {/* Botón para marcar favorito (ya lo tenés) */}
+                            {/* ... */}
+
+                            {/* Nuevo botón para ver detalle */}
+                            <Button
+                              variant='outlined'
+                              size='small'
+                              onClick={() => goToDetail(id)}
+                              sx={{ ml: 1 }}
+                            >
+                              Ver detalle
                             </Button>
                           </TableCell>
                         </TableRow>
