@@ -12,6 +12,7 @@ import AgencyCreate from "./pages/AgencyCreate.jsx";
 import RequireAuth from "./routes/RequireAuth.jsx";
 import ListingDetailPage from "./pages/ListingDetailPage.jsx";
 import MyPurchases from "./pages/MyPurchases.jsx";
+import MyFavorites from "./pages/MyFavorites.jsx";
 
 function App() {
   // Ejemplo: el rol viene de tu auth
@@ -66,6 +67,14 @@ function App() {
                   element={
                     <RequireAuth roles={["admin"]}>
                       <AgencyCreate />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/my-favorites'
+                  element={
+                    <RequireAuth roles={["buyer"]}>
+                      <MyFavorites />
                     </RequireAuth>
                   }
                 />

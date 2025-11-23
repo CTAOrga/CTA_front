@@ -10,12 +10,14 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
+import CarModelReviewModal from "../components/CarModelReviewModal.jsx";
 import { createPurchase } from "../infra/purchasesService.js";
 
 export default function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const [openReviewsModal, setOpenReviewsModal] = useState(false);
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
@@ -147,6 +149,13 @@ export default function ListingDetail() {
           >
             Comprar
           </Button>
+          <Button
+            variant='outlined'
+            sx={{ mt: 1, ml: 1 }}
+            onClick={() => setOpenReviewsModal(true)}
+          >
+            Ver reseñas del modelo
+          </Button>
 
           {/* Bloque reservado para Reviews (más adelante) */}
           <div style={{ marginTop: "2rem" }}>
@@ -161,6 +170,12 @@ export default function ListingDetail() {
           </Button>
         </CardContent>
       </Card>
+
+      <CarModelReviewModal
+        open={openReviewsModal}
+        onClose={() => setOpenReviewsModal(false)}
+        listing={listing}
+      />
 
       <Snackbar
         open={snackbar.open}

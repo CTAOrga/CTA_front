@@ -28,3 +28,8 @@ export async function removeFavorite(listingId) {
   }
   return data ?? { ok: true };
 }
+
+export async function getMyFavorites() {
+  const { data } = await http.get("/favorites/my");
+  return data ?? [];
+}

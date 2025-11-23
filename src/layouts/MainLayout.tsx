@@ -19,6 +19,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import InboxIcon from "@mui/icons-material/Inbox";
 import InfoIcon from "@mui/icons-material/Info";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import { useTheme } from "@mui/material/styles";
@@ -83,6 +84,14 @@ export default function MainLayout({
               <ShoppingBagIcon />
             </ListItemIcon>
             <ListItemText primary='Mis compras' />
+          </ListItemButton>
+        )}
+        {hasRole?.("buyer") && (
+          <ListItemButton component={RouterLink} to='/my-favorites'>
+            <ListItemIcon>
+              <FavoriteIcon />
+            </ListItemIcon>
+            <ListItemText primary='Mis favoritos' />
           </ListItemButton>
         )}
         <ListItemButton component={RouterLink} to='/about'>
