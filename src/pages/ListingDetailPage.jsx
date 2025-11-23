@@ -12,6 +12,9 @@ import {
 } from "@mui/material";
 import CarModelReviewModal from "../components/CarModelReviewModal.jsx";
 import { createPurchase } from "../infra/purchasesService.js";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
+import StarIcon from "@mui/icons-material/Star";
+import { addFavorite, removeFavorite } from "../infra/favoritesService.js";
 
 export default function ListingDetail() {
   const { id } = useParams();
@@ -19,6 +22,7 @@ export default function ListingDetail() {
 
   const [openReviewsModal, setOpenReviewsModal] = useState(false);
   const [listing, setListing] = useState(null);
+  const [savingFavorite, setSavingFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -89,6 +93,43 @@ export default function ListingDetail() {
     }
   };
 
+  const handleToggleFavorite = async () => {
+    if (!listing || savingFavorite) return;
+
+    const current = !!listing.is_favorite;
+
+    try {
+      setSavingFavorite(true);
+
+      if (current) {
+        await removeFavorite(listing.id);
+      } else {
+        await addFavorite(listing.id);
+      }
+
+      setListing((prev) => (prev ? { ...prev, is_favorite: !current } : prev));
+
+      setSnackbar({
+        open: true,
+        message: current
+          ? "Oferta quitada de favoritos"
+          : "Oferta agregada a favoritos",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Error al actualizar favorito:", error);
+      const msg =
+        error?.response?.data?.detail || "No se pudo actualizar el favorito";
+      setSnackbar({
+        open: true,
+        message: msg,
+        severity: "error",
+      });
+    } finally {
+      setSavingFavorite(false);
+    }
+  };
+
   if (loading) {
     return (
       <div
@@ -134,11 +175,18 @@ export default function ListingDetail() {
             </Typography>
           )}
 
-          {listing.is_favorite && (
-            <Typography variant='body2' color='primary' sx={{ mt: 1 }}>
-              ★ Marcado como favorito
-            </Typography>
-          )}
+          <Button
+            variant={listing.is_favorite ? "outlined" : "contained"}
+            color='warning'
+            sx={{ mt: 3, mr: 1 }}
+            onClick={handleToggleFavorite}
+            disabled={savingFavorite}
+            startIcon={listing.is_favorite ? <StarIcon /> : <StarBorderIcon />}
+          >
+            {listing.is_favorite
+              ? "Quitar de favoritos"
+              : "Agregar a favoritos"}
+          </Button>
 
           <Button
             variant='contained'

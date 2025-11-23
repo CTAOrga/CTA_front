@@ -141,25 +141,6 @@ export default function Home() {
   // Columnas compactas
   const showAgency = !isXs;
 
-  const handleMarkFavorite = async (listingId, current) => {
-    try {
-      if (!current) {
-        await addFavorite(listingId);
-      } else {
-        await removeFavorite(listingId);
-      }
-      // Actualizá el estado local para reflejar el cambio al instante
-      setRows((prev) =>
-        prev.map((r) =>
-          r.id === listingId ? { ...r, is_favorite: !current } : r
-        )
-      );
-    } catch (err) {
-      console.error("No se pudo actualizar favorito", err);
-      // acá podés mostrar un Snackbar si querés
-    }
-  };
-
   const goToDetail = (id) => {
     navigate(`/listings/${id}`);
   };
@@ -438,19 +419,7 @@ export default function Home() {
                           <TableCell
                             align='center'
                             sx={{ whiteSpace: "nowrap" }}
-                          >
-                            <Button
-                              size='small'
-                              variant={fav ? "outlined" : "contained"}
-                              color={fav ? "warning" : "primary"}
-                              onClick={() => handleMarkFavorite(id, fav)}
-                              data-testid='btn-fav'
-                              aria-label={`toggle-fav-${id}`}
-                              aria-pressed={fav}
-                            >
-                              {fav ? "Quitar" : "Marcar"}
-                            </Button>
-                          </TableCell>
+                          ></TableCell>
                           <TableCell>
                             {/* Botón para marcar favorito (ya lo tenés) */}
                             {/* ... */}
