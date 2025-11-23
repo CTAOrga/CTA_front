@@ -19,6 +19,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import InboxIcon from "@mui/icons-material/Inbox";
 import InfoIcon from "@mui/icons-material/Info";
+import RateReviewIcon from "@mui/icons-material/RateReview";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
@@ -92,6 +93,14 @@ export default function MainLayout({
               <FavoriteIcon />
             </ListItemIcon>
             <ListItemText primary='Mis favoritos' />
+          </ListItemButton>
+        )}
+        {hasRole?.("buyer") && (
+          <ListItemButton component={RouterLink} to='/my-reviews'>
+            <ListItemIcon>
+              <RateReviewIcon />
+            </ListItemIcon>
+            <ListItemText primary='Mis reseñas' />
           </ListItemButton>
         )}
         <ListItemButton component={RouterLink} to='/about'>
