@@ -29,7 +29,12 @@ import { useTheme } from "@mui/material/styles";
 import { searchListings } from "../infra/listingsService.js";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import StarIcon from "@mui/icons-material/Star";
-import { addFavorite, removeFavorite } from "../infra/favoritesService.js";
+import {
+  getMyListings,
+  cancelListing,
+  activateListing,
+  deleteListing,
+} from "../infra/agencyListingsService.js";
 import { useNavigate } from "react-router-dom";
 
 // Decide un rol “principal” a partir del array de roles
@@ -77,6 +82,7 @@ export default function Home() {
   const { isAuthenticated, roles = [] } = useAuth();
   const role = useMemo(() => getPrimaryRole(roles), [roles]);
   const ui = ROLE_UI[role];
+  const isAgency = role === "agency";
   const navigate = useNavigate();
 
   const theme = useTheme();
@@ -91,14 +97,20 @@ export default function Home() {
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("newest");
 
-  // Resultados
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(0); // UI 0-based
+  const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
 
+  const [agencyRows, setAgencyRows] = useState([]);
+  const [agencyLoading, setAgencyLoading] = useState(false);
+  const [agencyTotal, setAgencyTotal] = useState(0);
+  const [agencyPage, setAgencyPage] = useState(0); // UI 0-based
+  const [agencyPageSize, setAgencyPageSize] = useState(10);
+
   const runSearch = async () => {
+    if (isAgency) return;
     // validate min/max
     if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
       alert("min_price no puede ser mayor que max_price");
@@ -128,21 +140,88 @@ export default function Home() {
     }
   };
 
+  const loadAgencyListings = async () => {
+    if (!isAuthenticated || !isAgency) return;
+    setAgencyLoading(true);
+    try {
+      const data = await getMyListings({
+        page: agencyPage + 1, // backend 1-based
+        pageSize: agencyPageSize,
+      });
+      setAgencyRows(data.items ?? []);
+      setAgencyTotal(Number(data.total) || 0);
+    } catch (err) {
+      console.error("Error cargando listings de la agencia:", err);
+      setAgencyRows([]);
+      setAgencyTotal(0);
+    } finally {
+      setAgencyLoading(false);
+    }
+  };
+
+  const goToAgencyDetail = (id) => {
+    navigate(`/agency/listings/${id}`);
+  };
+
+  const goToAgencyEdit = (id) => {
+    navigate(`/agencies/listings/${id}/edit`);
+  };
+
   // Buscar al cargar
   useEffect(() => {
+    if (!isAuthenticated || isAgency) return;
     runSearch();
-  }, []);
+  }, [isAuthenticated, isAgency]);
 
-  // Rebuscar cuando cambie paginación
   useEffect(() => {
+    if (!isAuthenticated || isAgency) return;
     runSearch();
-  }, [page, pageSize]);
+  }, [page, pageSize, sort]);
 
   // Columnas compactas
   const showAgency = !isXs;
 
   const goToDetail = (id) => {
     navigate(`/listings/${id}`);
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated || !isAgency) return;
+    loadAgencyListings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isAgency, agencyPage, agencyPageSize]);
+
+  const handleCancelListing = async (id) => {
+    try {
+      await cancelListing(id);
+      setAgencyRows((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, is_active: false } : l))
+      );
+    } catch (err) {
+      console.error("No se pudo cancelar listing:", err);
+    }
+  };
+
+  const handleActivateListing = async (id) => {
+    try {
+      await activateListing(id);
+      setAgencyRows((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, is_active: true } : l))
+      );
+    } catch (err) {
+      console.error("No se pudo activar listing:", err);
+    }
+  };
+
+  const handleDeleteListing = async (id) => {
+    if (!window.confirm("¿Eliminar definitivamente esta oferta?")) return;
+    try {
+      await deleteListing(id);
+      setAgencyRows((prev) => prev.filter((l) => l.id !== id));
+      setAgencyTotal((prev) => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error("No se pudo eliminar listing:", err);
+    }
   };
 
   return (
@@ -175,7 +254,141 @@ export default function Home() {
             </Alert>
           </Paper>
         </Stack>
+      ) : isAgency ? (
+        // =========================
+        // Vista AGENCY: Mis autos publicados
+        // =========================
+        <Container maxWidth='lg' sx={{ py: 2 }}>
+          <Typography variant='h4' gutterBottom>
+            Mis autos publicados
+          </Typography>
+
+          <Paper variant='outlined'>
+            <TableContainer sx={{ maxHeight: 520 }}>
+              <Table stickyHeader size='small' aria-label='mis-listings'>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Marca</TableCell>
+                    <TableCell>Modelo</TableCell>
+                    <TableCell align='right'>Precio</TableCell>
+                    <TableCell align='center'>Stock</TableCell>
+                    <TableCell align='center'>Estado</TableCell>
+                    <TableCell align='center'>Creado</TableCell>
+                    <TableCell align='center'>Acciones</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {agencyLoading &&
+                    [...Array(5)].map((_, i) => (
+                      <TableRow key={`sk-ag-${i}`}>
+                        <TableCell colSpan={7}>
+                          <Skeleton height={24} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+
+                  {!agencyLoading &&
+                    agencyRows.map((l) => {
+                      const price = formatPrice(l.price, l.currency);
+                      const created =
+                        l.created_at &&
+                        new Date(l.created_at).toLocaleDateString();
+
+                      return (
+                        <TableRow
+                          hover
+                          key={l.id}
+                          data-testid='row-agency-listing'
+                        >
+                          <TableCell>{l.brand}</TableCell>
+                          <TableCell>{l.model}</TableCell>
+                          <TableCell align='right'>{price}</TableCell>
+                          <TableCell align='center'>{l.stock ?? "—"}</TableCell>
+                          <TableCell align='center'>
+                            {l.is_active ? "Activo" : "Cancelado"}
+                          </TableCell>
+                          <TableCell align='center'>{created ?? "—"}</TableCell>
+                          <TableCell align='center'>
+                            {l.is_active ? (
+                              <Button
+                                size='small'
+                                variant='outlined'
+                                onClick={() => handleCancelListing(l.id)}
+                                sx={{ mr: 1, mb: 0.5 }}
+                              >
+                                Cancelar
+                              </Button>
+                            ) : (
+                              <Button
+                                size='small'
+                                variant='outlined'
+                                onClick={() => handleActivateListing(l.id)}
+                                sx={{ mr: 1, mb: 0.5 }}
+                              >
+                                Activar
+                              </Button>
+                            )}
+                            <Button
+                              size='small'
+                              variant='outlined'
+                              color='error'
+                              onClick={() => handleDeleteListing(l.id)}
+                              sx={{ mr: 1, mb: 0.5 }}
+                            >
+                              Eliminar
+                            </Button>
+                            <Button
+                              size='small'
+                              variant='outlined'
+                              onClick={() => goToAgencyDetail(l.id)}
+                              sx={{ mb: 0.5 }}
+                            >
+                              Ver detalle
+                            </Button>
+                            <Button
+                              variant='contained'
+                              size='small'
+                              sx={{ ml: 1 }}
+                              onClick={() => goToAgencyEdit(l.id)}
+                            >
+                              Editar
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+
+                  {!agencyLoading && agencyRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7}>
+                        <Typography color='text.secondary'>
+                          No tenés autos publicados todavía.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <TablePagination
+              component='div'
+              rowsPerPageOptions={[5, 10, 20]}
+              count={agencyTotal}
+              rowsPerPage={agencyPageSize}
+              page={agencyPage}
+              onPageChange={(_, p) => setAgencyPage(p)}
+              onRowsPerPageChange={(e) => {
+                setAgencyPage(0);
+                setAgencyPageSize(parseInt(e.target.value, 10));
+              }}
+            />
+          </Paper>
+        </Container>
       ) : (
+        // =========================
+        // Vista BUYER/ADMIN: buscador general (tu vista original)
+        // =========================
         <Container maxWidth='lg' sx={{ py: 2 }}>
           {/* Filtro */}
           <Paper
@@ -359,7 +572,6 @@ export default function Home() {
 
                   {!loading &&
                     rows.map((r) => {
-                      // Toma campos exactamente como los devuelve tu API
                       const id = r.id;
                       const brand = r.brand ?? "—";
                       const model = r.model ?? "—";
@@ -415,16 +627,11 @@ export default function Home() {
                               </span>
                             </Tooltip>
                           </TableCell>
-                          {/* Botón para marcar/quitar (placeholder) */}
+
                           <TableCell
                             align='center'
                             sx={{ whiteSpace: "nowrap" }}
-                          ></TableCell>
-                          <TableCell>
-                            {/* Botón para marcar favorito (ya lo tenés) */}
-                            {/* ... */}
-
-                            {/* Nuevo botón para ver detalle */}
+                          >
                             <Button
                               variant='outlined'
                               size='small'

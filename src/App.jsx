@@ -14,15 +14,14 @@ import ListingDetailPage from "./pages/ListingDetailPage.jsx";
 import MyPurchases from "./pages/MyPurchases.jsx";
 import MyFavorites from "./pages/MyFavorites.jsx";
 import MyReviews from "./pages/MyReviews.jsx";
+import EditListingAgency from "./pages/EditListingAgency.jsx";
+import ListingDetailAgency from "./pages/ListingDetailAgency.jsx";
 
 function App() {
   // Ejemplo: el rol viene de tu auth
   //const [userRole] = useState("admin"); // 'admin' | 'editor' | 'viewer' ...
   const { isAuthenticated, roles = [] } = useAuth() ?? {};
   const lower = roles.map((r) => String(r).toLowerCase());
-
-  console.log("Roles:", roles);
-  console.log("IsAutheticated:", isAuthenticated);
 
   const roleForTheme = !isAuthenticated
     ? "guest"
@@ -33,8 +32,6 @@ function App() {
     : lower.includes("agency")
     ? "agency"
     : "guest"; // fallback seguro
-
-  console.log("roleForTheme:", roleForTheme);
 
   return (
     <ThemeController role={roleForTheme} initialMode='light'>
@@ -47,6 +44,22 @@ function App() {
                 <Route path='/about' element={<About />} />
                 <Route path='/login' element={<Login />} />
                 <Route path='/register' element={<Register />} />
+                <Route
+                  path='/agency/listings/:id'
+                  element={
+                    <RequireAuth roles={["agency"]}>
+                      <ListingDetailAgency />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/agencies/listings/:id/edit'
+                  element={
+                    <RequireAuth roles={["agency"]}>
+                      <EditListingAgency />
+                    </RequireAuth>
+                  }
+                />
                 <Route
                   path='/listings/:id'
                   element={
