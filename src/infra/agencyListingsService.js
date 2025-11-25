@@ -26,3 +26,8 @@ export async function deleteListing(id) {
 export const updateListing = (id, payload) => {
   return http.patch(`/listings/${id}`, payload);
 };
+
+export async function createListing(payload) {
+  const { data } = await http.post("/listings", payload);
+  return data;
+}

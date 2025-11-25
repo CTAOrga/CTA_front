@@ -19,6 +19,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import InboxIcon from "@mui/icons-material/Inbox";
 import InfoIcon from "@mui/icons-material/Info";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -102,6 +103,30 @@ export default function MainLayout({
             </ListItemIcon>
             <ListItemText primary='Mis reseñas' />
           </ListItemButton>
+        )}
+        {hasRole?.("agency") && (
+          <>
+            <ListItemButton component={RouterLink} to='/agencies/listings/new'>
+              <ListItemIcon>
+                <AddCircleOutlineIcon />
+              </ListItemIcon>
+              <ListItemText primary='Crear publicación' />
+            </ListItemButton>
+
+            <ListItemButton component={RouterLink} to='/agencies/sales'>
+              <ListItemIcon>
+                <ShoppingBagIcon />
+              </ListItemIcon>
+              <ListItemText primary='Mis ventas' />
+            </ListItemButton>
+
+            <ListItemButton component={RouterLink} to='/agencies/customers'>
+              <ListItemIcon>
+                <PersonAddIcon />
+              </ListItemIcon>
+              <ListItemText primary='Mis clientes' />
+            </ListItemButton>
+          </>
         )}
         <ListItemButton component={RouterLink} to='/about'>
           <ListItemIcon>

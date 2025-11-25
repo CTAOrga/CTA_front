@@ -16,6 +16,9 @@ import MyFavorites from "./pages/MyFavorites.jsx";
 import MyReviews from "./pages/MyReviews.jsx";
 import EditListingAgency from "./pages/EditListingAgency.jsx";
 import ListingDetailAgency from "./pages/ListingDetailAgency.jsx";
+import AgencySales from "./pages/AgencySales.jsx";
+import AgencyCustomers from "./pages/AgencyCustomers.jsx";
+import CreateListingAgency from "./pages/CreateListingAgency.jsx";
 
 function App() {
   // Ejemplo: el rol viene de tu auth
@@ -45,10 +48,18 @@ function App() {
                 <Route path='/login' element={<Login />} />
                 <Route path='/register' element={<Register />} />
                 <Route
-                  path='/agency/listings/:id'
+                  path='/agencies/listings/:id'
                   element={
                     <RequireAuth roles={["agency"]}>
                       <ListingDetailAgency />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/agencies/listings/new'
+                  element={
+                    <RequireAuth roles={["agency"]}>
+                      <CreateListingAgency />
                     </RequireAuth>
                   }
                 />
@@ -97,6 +108,23 @@ function App() {
                   element={
                     <RequireAuth roles={["buyer"]}>
                       <MyReviews />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/agencies/sales'
+                  element={
+                    <RequireAuth roles={["agency"]}>
+                      <AgencySales />
+                    </RequireAuth>
+                  }
+                />
+
+                <Route
+                  path='/agencies/customers'
+                  element={
+                    <RequireAuth roles={["agency"]}>
+                      <AgencyCustomers />
                     </RequireAuth>
                   }
                 />

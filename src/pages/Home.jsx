@@ -160,7 +160,7 @@ export default function Home() {
   };
 
   const goToAgencyDetail = (id) => {
-    navigate(`/agency/listings/${id}`);
+    navigate(`/agencies/listings/${id}`);
   };
 
   const goToAgencyEdit = (id) => {
