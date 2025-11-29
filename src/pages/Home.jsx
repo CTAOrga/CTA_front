@@ -35,6 +35,7 @@ import {
   activateListing,
   deleteListing,
 } from "../infra/agencyListingsService.js";
+import AdminReportsDashboard from "../components/AdminReportsDashboard";
 import { useNavigate } from "react-router-dom";
 
 // Decide un rol “principal” a partir del array de roles
@@ -83,6 +84,7 @@ export default function Home() {
   const role = useMemo(() => getPrimaryRole(roles), [roles]);
   const ui = ROLE_UI[role];
   const isAgency = role === "agency";
+  const isAdmin = role === "admin";
   const navigate = useNavigate();
 
   const theme = useTheme();
@@ -96,6 +98,14 @@ export default function Home() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("newest");
+
+  // Filtros para agencia
+  const [agencyBrand, setAgencyBrand] = useState("");
+  const [agencyModel, setAgencyModel] = useState("");
+  const [agencyOnlyActive, setAgencyOnlyActive] = useState(false);
+  const [agencyMinPrice, setAgencyMinPrice] = useState("");
+  const [agencyMaxPrice, setAgencyMaxPrice] = useState("");
+  const [agencySort, setAgencySort] = useState("newest");
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -142,11 +152,25 @@ export default function Home() {
 
   const loadAgencyListings = async () => {
     if (!isAuthenticated || !isAgency) return;
+    if (
+      agencyMinPrice &&
+      agencyMaxPrice &&
+      Number(agencyMinPrice) > Number(agencyMaxPrice)
+    ) {
+      alert("min_price no puede ser mayor que max_price");
+      return;
+    }
     setAgencyLoading(true);
     try {
       const data = await getMyListings({
         page: agencyPage + 1, // backend 1-based
         pageSize: agencyPageSize,
+        brand: agencyBrand || undefined,
+        model: agencyModel || undefined,
+        isActive: agencyOnlyActive ? true : undefined,
+        minPrice: agencyMinPrice ? Number(agencyMinPrice) : undefined,
+        maxPrice: agencyMaxPrice ? Number(agencyMaxPrice) : undefined,
+        sort: agencySort,
       });
       setAgencyRows(data.items ?? []);
       setAgencyTotal(Number(data.total) || 0);
@@ -189,7 +213,18 @@ export default function Home() {
     if (!isAuthenticated || !isAgency) return;
     loadAgencyListings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isAgency, agencyPage, agencyPageSize]);
+  }, [
+    isAuthenticated,
+    isAgency,
+    agencyPage,
+    agencyPageSize,
+    agencyBrand,
+    agencyModel,
+    agencyOnlyActive,
+    agencyMinPrice,
+    agencyMaxPrice,
+    agencySort,
+  ]);
 
   const handleCancelListing = async (id) => {
     try {
@@ -262,6 +297,121 @@ export default function Home() {
           <Typography variant='h4' gutterBottom>
             Mis autos publicados
           </Typography>
+          {/* Filtros AGENCY */}
+          <Paper
+            variant='outlined'
+            sx={{
+              p: 2,
+              mb: 2,
+              borderTop: (t) => `3px solid ${t.palette.warning.main}`,
+            }}
+          >
+            <Grid container spacing={1.5}>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  label='Marca'
+                  value={agencyBrand}
+                  onChange={(e) => {
+                    setAgencyBrand(e.target.value);
+                    setAgencyPage(0);
+                  }}
+                  fullWidth
+                  size='small'
+                />
+              </Grid>
+
+              <Grid item xs={12} md={3}>
+                <TextField
+                  label='Modelo'
+                  value={agencyModel}
+                  onChange={(e) => {
+                    setAgencyModel(e.target.value);
+                    setAgencyPage(0);
+                  }}
+                  fullWidth
+                  size='small'
+                />
+              </Grid>
+
+              <Grid item xs={6} md={2}>
+                <TextField
+                  label='min_price'
+                  value={agencyMinPrice}
+                  onChange={(e) => {
+                    setAgencyMinPrice(e.target.value.replace(/[^\d]/g, ""));
+                    setAgencyPage(0);
+                  }}
+                  fullWidth
+                  size='small'
+                  inputMode='numeric'
+                />
+              </Grid>
+
+              <Grid item xs={6} md={2}>
+                <TextField
+                  label='max_price'
+                  value={agencyMaxPrice}
+                  onChange={(e) => {
+                    setAgencyMaxPrice(e.target.value.replace(/[^\d]/g, ""));
+                    setAgencyPage(0);
+                  }}
+                  fullWidth
+                  size='small'
+                  inputMode='numeric'
+                />
+              </Grid>
+
+              <Grid item xs={6} md={2}>
+                <TextField
+                  select
+                  label='Orden'
+                  value={agencySort}
+                  onChange={(e) => {
+                    setAgencySort(e.target.value);
+                    setAgencyPage(0);
+                  }}
+                  fullWidth
+                  size='small'
+                >
+                  <MenuItem value='newest'>Más nuevos</MenuItem>
+                  <MenuItem value='price_asc'>Precio ↑</MenuItem>
+                  <MenuItem value='price_desc'>Precio ↓</MenuItem>
+                </TextField>
+              </Grid>
+
+              <Grid item xs={6} md={3}>
+                <Stack direction='row' alignItems='center'>
+                  <Chip
+                    label={agencyOnlyActive ? "Sólo activas" : "Todas"}
+                    variant={agencyOnlyActive ? "filled" : "outlined"}
+                    color='warning'
+                    onClick={() => {
+                      setAgencyOnlyActive((prev) => !prev);
+                      setAgencyPage(0);
+                    }}
+                  />
+                </Stack>
+              </Grid>
+
+              <Grid item xs={12} md='auto'>
+                <Button
+                  variant='outlined'
+                  onClick={() => {
+                    setAgencyBrand("");
+                    setAgencyModel("");
+                    setAgencyOnlyActive(false);
+                    setAgencyMinPrice("");
+                    setAgencyMaxPrice("");
+                    setAgencySort("newest");
+                    setAgencyPage(0);
+                    loadAgencyListings();
+                  }}
+                >
+                  Limpiar
+                </Button>
+              </Grid>
+            </Grid>
+          </Paper>
 
           <Paper variant='outlined'>
             <TableContainer sx={{ maxHeight: 520 }}>
@@ -385,10 +535,9 @@ export default function Home() {
             />
           </Paper>
         </Container>
+      ) : isAdmin ? (
+        <AdminReportsDashboard />
       ) : (
-        // =========================
-        // Vista BUYER/ADMIN: buscador general (tu vista original)
-        // =========================
         <Container maxWidth='lg' sx={{ py: 2 }}>
           {/* Filtro */}
           <Paper

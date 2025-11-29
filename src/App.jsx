@@ -19,10 +19,15 @@ import ListingDetailAgency from "./pages/ListingDetailAgency.jsx";
 import AgencySales from "./pages/AgencySales.jsx";
 import AgencyCustomers from "./pages/AgencyCustomers.jsx";
 import CreateListingAgency from "./pages/CreateListingAgency.jsx";
+import InventoryListAgency from "./pages/InventoryListAgency";
+import CreateInventoryItemAgency from "./pages/CreateInventoryItemAgency";
+import EditInventoryItemAgency from "./pages/EditInventoryItemAgency";
+import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminFavorites from "./pages/AdminFavorites";
+import AdminReviews from "./pages/AdminReviews";
+import AdminPurchases from "./pages/AdminPurchases";
 
 function App() {
-  // Ejemplo: el rol viene de tu auth
-  //const [userRole] = useState("admin"); // 'admin' | 'editor' | 'viewer' ...
   const { isAuthenticated, roles = [] } = useAuth() ?? {};
   const lower = roles.map((r) => String(r).toLowerCase());
 
@@ -63,6 +68,7 @@ function App() {
                     </RequireAuth>
                   }
                 />
+
                 <Route
                   path='/agencies/listings/:id/edit'
                   element={
@@ -96,6 +102,38 @@ function App() {
                   }
                 />
                 <Route
+                  path='/admin/purchases'
+                  element={
+                    <RequireAuth roles={["admin"]}>
+                      <AdminPurchases />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/admin/favorites'
+                  element={
+                    <RequireAuth roles={["admin"]}>
+                      <AdminFavorites />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/admin/reviews'
+                  element={
+                    <RequireAuth roles={["admin"]}>
+                      <AdminReviews />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/admin/users'
+                  element={
+                    <RequireAuth roles={["admin"]}>
+                      <AdminUsersPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
                   path='/my-favorites'
                   element={
                     <RequireAuth roles={["buyer"]}>
@@ -125,6 +163,30 @@ function App() {
                   element={
                     <RequireAuth roles={["agency"]}>
                       <AgencyCustomers />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/agencies/inventory'
+                  element={
+                    <RequireAuth roles={["agency"]}>
+                      <InventoryListAgency />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/agencies/inventory/new'
+                  element={
+                    <RequireAuth roles={["agency"]}>
+                      <CreateInventoryItemAgency />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path='/agencies/inventory/:id/edit'
+                  element={
+                    <RequireAuth roles={["agency"]}>
+                      <EditInventoryItemAgency />
                     </RequireAuth>
                   }
                 />

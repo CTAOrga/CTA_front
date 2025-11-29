@@ -10,36 +10,79 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  TextField,
+  Grid,
+  Button,
 } from "@mui/material";
 import { getMySales } from "../infra/agencySalesService";
 
 export default function AgencySales() {
   const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // arranca en false
   const [error, setError] = useState("");
 
+  // 🔹 Filtros
+  const [brand, setBrand] = useState("");
+  const [model, setModel] = useState("");
+  const [customer, setCustomer] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
+      // validar rango de fechas antes de pegarle al back
+      if (dateFrom && dateTo && dateFrom > dateTo) {
+        setError('"Desde" no puede ser mayor que "Hasta"');
+        setRows([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+
       try {
-        const data = await getMySales();
-        setRows(data || []);
+        const data = await getMySales({
+          brand: brand || undefined,
+          model: model || undefined,
+          customer: customer || undefined,
+          dateFrom: dateFrom || undefined, // "YYYY-MM-DD"
+          dateTo: dateTo || undefined,
+        });
+
+        if (!cancelled) {
+          setRows(data || []);
+        }
       } catch (e) {
         console.error(e);
-        setError("No se pudieron cargar las ventas");
+        if (!cancelled) {
+          setError("No se pudieron cargar las ventas");
+          setRows([]);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
+
     load();
-  }, []);
 
-  if (loading) {
-    return <CircularProgress />;
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, [brand, model, customer, dateFrom, dateTo]);
 
-  if (error) {
-    return <Alert severity='error'>{error}</Alert>;
-  }
+  const handleClearFilters = () => {
+    setBrand("");
+    setModel("");
+    setCustomer("");
+    setDateFrom("");
+    setDateTo("");
+    setError("");
+  };
 
   return (
     <>
@@ -47,8 +90,87 @@ export default function AgencySales() {
         Mis ventas
       </Typography>
 
+      {error && (
+        <Paper variant='outlined' sx={{ p: 2, mb: 2 }}>
+          <Alert severity='error'>{error}</Alert>
+        </Paper>
+      )}
+
+      <Paper variant='outlined' sx={{ p: 2, mb: 2 }}>
+        <Grid container spacing={1.5}>
+          <Grid item xs={12} md={3}>
+            <TextField
+              label='Marca'
+              value={brand}
+              onChange={(e) => setBrand(e.target.value)}
+              fullWidth
+              size='small'
+              placeholder='Fiat, VW...'
+            />
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <TextField
+              label='Modelo'
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              fullWidth
+              size='small'
+              placeholder='Gol, Onix...'
+            />
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <TextField
+              label='Cliente (email)'
+              value={customer}
+              onChange={(e) => setCustomer(e.target.value)}
+              fullWidth
+              size='small'
+              placeholder='parte del mail'
+            />
+          </Grid>
+
+          <Grid item xs={6} md={1.5}>
+            <TextField
+              label='Desde'
+              type='date'
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              fullWidth
+              size='small'
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+
+          <Grid item xs={6} md={1.5}>
+            <TextField
+              label='Hasta'
+              type='date'
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              fullWidth
+              size='small'
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <Button variant='outlined' fullWidth onClick={handleClearFilters}>
+              Limpiar
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
       <Paper variant='outlined' sx={{ p: 2 }}>
-        {rows.length === 0 ? (
+        {/* Spinner mientras recarga, pero sin volar la tabla/filtros */}
+        {loading && (
+          <div style={{ marginBottom: 8 }}>
+            <CircularProgress size={20} />
+          </div>
+        )}
+
+        {rows.length === 0 && !loading ? (
           <Typography color='text.secondary'>
             Todavía no tenés ventas registradas.
           </Typography>

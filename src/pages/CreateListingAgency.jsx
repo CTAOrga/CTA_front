@@ -8,9 +8,11 @@ import {
   TextField,
   Button,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import { createListing } from "../infra/agencyListingsService";
-import { getInventory } from "../infra/inventoryService";
+import { getMyInventory } from "../infra/inventoryService";
+import Autocomplete from "@mui/material/Autocomplete";
 
 export default function CreateListingAgency() {
   const navigate = useNavigate();
@@ -21,19 +23,25 @@ export default function CreateListingAgency() {
   const [sellerNotes, setSellerNotes] = useState("");
   const [expiresOn, setExpiresOn] = useState("");
 
+  const [loadingInv, setLoadingInv] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
   const [inventory, setInventory] = useState([]);
-  const [carModelId, setCarModelId] = useState("");
+  const [selectedInventory, setSelectedInventory] = useState(null);
+  const [inventoryError, setInventoryError] = useState("");
 
   useEffect(() => {
     const loadInventory = async () => {
       try {
-        const data = await getInventory();
+        setLoadingInv(true);
+        const data = await getMyInventory();
         setInventory(Array.isArray(data.items) ? data.items : []);
       } catch (e) {
         console.error("Error cargando inventario", e);
         setInventory([]);
+      } finally {
+        setLoadingInv(false);
       }
     };
     loadInventory();
@@ -43,18 +51,36 @@ export default function CreateListingAgency() {
     e.preventDefault();
     setError(null);
 
-    if (!carModelId || !price || !stock) {
-      setError("Completá al menos marca, modelo, precio y stock.");
+    if (!selectedInventory) {
+      setInventoryError(
+        "Debés seleccionar un auto de tu inventario (escribí y elegí de la lista)."
+      );
+      return;
+    }
+
+    if (!price || !stock) {
+      setError("Completá al menos precio y stock.");
+      return;
+    }
+
+    const requestedStock = Number(stock);
+
+    if (requestedStock > selectedInventory.quantity) {
+      setError(
+        `No hay stock suficiente en inventario. Disponible: ${selectedInventory.quantity}.`
+      );
       return;
     }
 
     setSaving(true);
     try {
       const payload = {
-        car_model_id: Number(carModelId),
+        inventory_id: selectedInventory.id,
+        brand: selectedInventory.brand,
+        model: selectedInventory.model,
         current_price_amount: Number(price),
         current_price_currency: currency,
-        stock: Number(stock),
+        stock: requestedStock,
         seller_notes: sellerNotes || null,
         expires_on: expiresOn ? new Date(expiresOn).toISOString() : null,
       };
@@ -65,7 +91,12 @@ export default function CreateListingAgency() {
       navigate(`/agencies/listings/${created.id}`);
     } catch (err) {
       console.error(err);
-      setError("No se pudo crear la publicación.");
+      const detail = err?.response?.data?.detail;
+      if (detail) {
+        setError(detail);
+      } else {
+        setError("Error creando la publicación");
+      }
     } finally {
       setSaving(false);
     }
@@ -83,6 +114,14 @@ export default function CreateListingAgency() {
     navigate("/");
   };
 
+  if (loadingInv) {
+    return (
+      <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ maxWidth: 700, mx: "auto", mt: 2 }}>
       <Paper sx={{ p: 3 }}>
@@ -92,17 +131,34 @@ export default function CreateListingAgency() {
 
             {error && <Alert severity='error'>{error}</Alert>}
 
-            <select
-              value={carModelId}
-              onChange={(e) => setCarModelId(e.target.value)}
-            >
-              <option value=''>Seleccionar auto</option>
-              {inventory.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.brand} {c.model} ({c.is_used ? "Usado" : "Nuevo"})
-                </option>
-              ))}
-            </select>
+            {/* AUTOCOMPLETE SOBRE INVENTARIO */}
+            <Autocomplete
+              options={inventory}
+              value={selectedInventory}
+              onChange={(_, newValue) => {
+                setSelectedInventory(newValue);
+                setInventoryError("");
+              }}
+              getOptionLabel={(option) =>
+                `${option.brand} ${option.model}${
+                  option.is_used ? " (Usado)" : " (0km)"
+                } - stock: ${option.quantity}`
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label='Vehículo (inventario)'
+                  placeholder='Ej: Fiat Cronos'
+                  size='small'
+                  error={!!inventoryError}
+                  helperText={
+                    inventoryError ||
+                    "Escribí marca/modelo y elegí uno de la lista de tu inventario"
+                  }
+                />
+              )}
+              noOptionsText='No hay autos en tu inventario que coincidan'
+            />
 
             <TextField
               label='Precio'

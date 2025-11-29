@@ -1,9 +1,28 @@
 import http from "./http";
 
-export async function getMyListings({ page = 1, pageSize = 10 } = {}) {
-  const { data } = await http.get(
-    `/agencies/my-listings?page=${page}&page_size=${pageSize}`
-  );
+export async function getMyListings({
+  page,
+  pageSize,
+  brand,
+  model,
+  isActive,
+  minPrice,
+  maxPrice,
+  sort,
+}) {
+  const params = {
+    page,
+    page_size: pageSize,
+  };
+
+  if (brand) params.brand = brand;
+  if (model) params.model = model;
+  if (typeof isActive === "boolean") params.is_active = isActive;
+  if (minPrice != null) params.min_price = minPrice;
+  if (maxPrice != null) params.max_price = maxPrice;
+  if (sort) params.sort = sort;
+
+  const { data } = await http.get("/agencies/my-listings", { params });
   return data;
 }
 
