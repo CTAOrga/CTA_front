@@ -1,6 +1,5 @@
 import http from "./http";
 
-// POST /api/v1/favorites/{listing_id}
 export async function addFavorite(listingId) {
   const url = `/favorites/${encodeURIComponent(listingId)}`;
   const { data } = await http.post(url); // sin body
@@ -11,11 +10,9 @@ export async function addFavorite(listingId) {
       })
     );
   }
-  // si tu API responde 204 No Content, devolvemos algo usable igual
   return data ?? { ok: true };
 }
 
-// DELETE /api/v1/favorites/{listing_id}
 export async function removeFavorite(listingId) {
   const url = `/favorites/${encodeURIComponent(listingId)}`;
   const { data } = await http.delete(url);
@@ -29,7 +26,21 @@ export async function removeFavorite(listingId) {
   return data ?? { ok: true };
 }
 
-export async function getMyFavorites() {
-  const { data } = await http.get("/favorites/my");
-  return data ?? [];
+export async function getMyFavorites({
+  brand,
+  model,
+  agencyId,
+  minPrice,
+  maxPrice,
+} = {}) {
+  const params = {};
+
+  if (brand) params.brand = brand;
+  if (model) params.model = model;
+  if (agencyId) params.agency_id = agencyId;
+  if (minPrice != null && minPrice !== "") params.min_price = minPrice;
+  if (maxPrice != null && maxPrice !== "") params.max_price = maxPrice;
+
+  const { data } = await http.get("/favorites/my", { params });
+  return data;
 }

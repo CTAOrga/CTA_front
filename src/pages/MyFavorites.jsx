@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Typography,
   Table,
@@ -10,6 +10,9 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Paper,
+  Grid,
+  TextField,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getMyFavorites, removeFavorite } from "../infra/favoritesService.js";
@@ -30,15 +33,41 @@ export default function MyFavorites() {
     message: "",
     severity: "success",
   });
+  const [filterError, setFilterError] = useState("");
+
   const navigate = useNavigate();
 
+  const [brandFilter, setBrandFilter] = useState("");
+  const [modelFilter, setModelFilter] = useState("");
+  const [agencyFilter, setAgencyFilter] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+
   const load = async () => {
+    const minP = minPrice ? Number(minPrice) : null;
+    const maxP = maxPrice ? Number(maxPrice) : null;
+
+    if (minP !== null && maxP !== null && minP > maxP) {
+      setFilterError("El precio mínimo no puede ser mayor que el máximo");
+      setRows([]);
+      return;
+    }
+
+    setFilterError("");
+    setLoading(true);
+
     try {
-      setLoading(true);
-      const data = await getMyFavorites();
-      setRows(data);
+      const data = await getMyFavorites({
+        brand: brandFilter || undefined,
+        model: modelFilter || undefined,
+        agencyId: agencyFilter.trim() || undefined,
+        minPrice: minPrice ? Number(minPrice) : undefined,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      });
+      setRows(data || []);
     } catch (err) {
       console.error("Error cargando favoritos:", err);
+      setRows([]);
       setSnackbar({
         open: true,
         message:
@@ -52,9 +81,14 @@ export default function MyFavorites() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Si cambian favoritos desde otra pantalla, recargo
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brandFilter, modelFilter, agencyFilter, minPrice, maxPrice]);
+
   useEffect(() => {
     const handler = () => load();
     if (typeof window !== "undefined") {
@@ -65,6 +99,7 @@ export default function MyFavorites() {
         window.removeEventListener("favorites:changed", handler);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRemove = async (listingId) => {
@@ -96,7 +131,15 @@ export default function MyFavorites() {
     navigate(`/listings/${listingId}`);
   };
 
-  if (loading) {
+  const handleClearFilters = () => {
+    setBrandFilter("");
+    setModelFilter("");
+    setAgencyFilter("");
+    setMinPrice("");
+    setMaxPrice("");
+  };
+
+  if (loading && rows.length === 0) {
     return (
       <div
         style={{
@@ -117,10 +160,80 @@ export default function MyFavorites() {
         Mis favoritos
       </Typography>
 
+      <Paper variant='outlined' sx={{ p: 2, mb: 2 }}>
+        <Grid container spacing={1.5}>
+          <Grid item xs={12} md={3}>
+            <TextField
+              label='Marca'
+              value={brandFilter}
+              onChange={(e) => setBrandFilter(e.target.value)}
+              fullWidth
+              size='small'
+              placeholder='Fiat, VW...'
+            />
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <TextField
+              label='Modelo'
+              value={modelFilter}
+              onChange={(e) => setModelFilter(e.target.value)}
+              fullWidth
+              size='small'
+              placeholder='Gol, Onix...'
+            />
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <TextField
+              label='Agencia (ID)'
+              value={agencyFilter}
+              onChange={(e) => setAgencyFilter(e.target.value)}
+              fullWidth
+              size='small'
+              placeholder='Ej: 12'
+            />
+          </Grid>
+
+          <Grid item xs={6} md={2}>
+            <TextField
+              label='Precio mín'
+              value={minPrice}
+              onChange={(e) =>
+                setMinPrice(e.target.value.replace(/[^\d]/g, ""))
+              }
+              fullWidth
+              size='small'
+              inputMode='numeric'
+            />
+          </Grid>
+          <Grid item xs={6} md={2}>
+            <TextField
+              label='Precio máx'
+              value={maxPrice}
+              onChange={(e) =>
+                setMaxPrice(e.target.value.replace(/[^\d]/g, ""))
+              }
+              fullWidth
+              size='small'
+              inputMode='numeric'
+            />
+          </Grid>
+
+          <Grid item xs={12} md='auto'>
+            <Button variant='outlined' onClick={handleClearFilters}>
+              Limpiar filtros
+            </Button>
+          </Grid>
+
+          {filterError && (
+            <Grid item xs={12}>
+              <Alert severity='warning'>{filterError}</Alert>
+            </Grid>
+          )}
+        </Grid>
+      </Paper>
+
       {rows.length === 0 ? (
-        <Typography>
-          Todavía no tenés autos guardados como favoritos.
-        </Typography>
+        <Typography>No hay favoritos para el filtro seleccionado.</Typography>
       ) : (
         <Table size='small'>
           <TableHead>
