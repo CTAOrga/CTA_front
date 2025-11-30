@@ -1,0 +1,243 @@
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getListingById } from "../infra/listingsService.js";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  CircularProgress,
+  Snackbar,
+  Alert,
+} from "@mui/material";
+import CarModelReviewModal from "../components/CarModelReviewModal.jsx";
+import { createPurchase } from "../infra/purchasesService.js";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
+import StarIcon from "@mui/icons-material/Star";
+import { addFavorite, removeFavorite } from "../infra/favoritesService.js";
+
+export default function ListingDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [openReviewsModal, setOpenReviewsModal] = useState(false);
+  const [listing, setListing] = useState(null);
+  const [savingFavorite, setSavingFavorite] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const data = await getListingById(Number(id));
+        setListing(data);
+      } catch (error) {
+        console.error("Error cargando listing:", error);
+        setSnackbar({
+          open: true,
+          message:
+            error?.response?.data?.detail || "No se pudo cargar la oferta",
+          severity: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (id) {
+      fetchData();
+    }
+  }, [id]);
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  const handleBuy = async () => {
+    if (!listing) return;
+
+    try {
+      const data = await createPurchase({
+        listingId: listing.id,
+        quantity: 1,
+      });
+
+      setSnackbar({
+        open: true,
+        message: "Compra realizada con éxito",
+        severity: "success",
+      });
+
+      // Actualizar stock en la UI sin recargar
+      setListing((prev) =>
+        prev
+          ? {
+              ...prev,
+              stock: prev.stock - data.quantity,
+            }
+          : prev
+      );
+    } catch (error) {
+      console.error("Error al comprar:", error);
+      const msg =
+        error?.response?.data?.detail || "No se pudo realizar la compra";
+      setSnackbar({
+        open: true,
+        message: msg,
+        severity: "error",
+      });
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!listing || savingFavorite) return;
+
+    const current = !!listing.is_favorite;
+
+    try {
+      setSavingFavorite(true);
+
+      if (current) {
+        await removeFavorite(listing.id);
+      } else {
+        await addFavorite(listing.id);
+      }
+
+      setListing((prev) => (prev ? { ...prev, is_favorite: !current } : prev));
+
+      setSnackbar({
+        open: true,
+        message: current
+          ? "Oferta quitada de favoritos"
+          : "Oferta agregada a favoritos",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Error al actualizar favorito:", error);
+      const msg =
+        error?.response?.data?.detail || "No se pudo actualizar el favorito";
+      setSnackbar({
+        open: true,
+        message: msg,
+        severity: "error",
+      });
+    } finally {
+      setSavingFavorite(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "2rem",
+        }}
+      >
+        <CircularProgress />
+      </div>
+    );
+  }
+
+  if (!listing) {
+    return (
+      <Typography variant='h6' align='center' sx={{ mt: 4 }}>
+        No se encontró la oferta
+      </Typography>
+    );
+  }
+
+  return (
+    <>
+      <Card sx={{ maxWidth: 600, margin: "2rem auto" }}>
+        <CardContent>
+          <Typography variant='h5' gutterBottom>
+            {listing.brand} {listing.model}
+          </Typography>
+
+          <Typography variant='body1'>
+            Precio: {listing.current_price_currency}{" "}
+            {listing.current_price_amount}
+          </Typography>
+
+          <Typography variant='body1'>
+            Stock disponible: {listing.stock}
+          </Typography>
+
+          {listing.seller_notes && (
+            <Typography variant='body2' sx={{ mt: 2 }}>
+              Notas del vendedor: {listing.seller_notes}
+            </Typography>
+          )}
+
+          <Button
+            variant={listing.is_favorite ? "outlined" : "contained"}
+            color='warning'
+            sx={{ mt: 3, mr: 1 }}
+            onClick={handleToggleFavorite}
+            disabled={savingFavorite}
+            startIcon={listing.is_favorite ? <StarIcon /> : <StarBorderIcon />}
+          >
+            {listing.is_favorite
+              ? "Quitar de favoritos"
+              : "Agregar a favoritos"}
+          </Button>
+
+          <Button
+            variant='contained'
+            color='primary'
+            sx={{ mt: 3 }}
+            onClick={handleBuy}
+            disabled={listing.stock <= 0}
+          >
+            Comprar
+          </Button>
+          <Button
+            variant='outlined'
+            sx={{ mt: 1, ml: 1 }}
+            onClick={() => setOpenReviewsModal(true)}
+          >
+            Ver reseñas del modelo
+          </Button>
+
+          {/* Bloque reservado para Reviews (más adelante) */}
+          <div style={{ marginTop: "2rem" }}>
+            <Typography variant='h6'>Reseñas</Typography>
+            <Typography variant='body2' color='text.secondary'>
+              Próximamente: puntuar y dejar un comentario sobre este auto.
+            </Typography>
+          </div>
+
+          <Button sx={{ mt: 2 }} onClick={() => navigate(-1)}>
+            Volver
+          </Button>
+        </CardContent>
+      </Card>
+
+      <CarModelReviewModal
+        open={openReviewsModal}
+        onClose={() => setOpenReviewsModal(false)}
+        listing={listing}
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          severity={snackbar.severity}
+          variant='filled'
+          onClose={handleCloseSnackbar}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
+  );
+}

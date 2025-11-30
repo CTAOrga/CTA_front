@@ -3,37 +3,69 @@ name: k6 Load Tests
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: ["main", "k6"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "k6"]
 
 jobs:
   k6:
     runs-on: ubuntu-latest
-    env:
-      # Definí esto en Settings → Secrets and variables → Actions → Variables o Secrets
-      # Por ejemplo, tu API de staging:
-      API_BASE_URL: ${{ vars.API_BASE_URL }}
-      # Si tu endpoint de k6 necesitara token:
-      # API_TOKEN: ${{ secrets.API_TOKEN }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Ejecuta k6 con la acción oficial
+      # (Opcional) mostrar versiones de Docker/Compose del runner
+      - name: Show Docker versions
+        run: |
+          docker --version
+          docker compose version
+
+      # Levantar MySQL + Backend con tu compose
+      # Ajustá la ruta si tu compose NO está en devops/compose.yml
+      - name: Up MySQL
+        run: docker compose -f devops/compose.yml up -d mysql
+
+      # Darle aire extra a MySQL (además del healthcheck del compose)
+      - name: Wait MySQL a bit
+        run: sleep 30
+
+      - name: Up backend
+        run: docker compose -f devops/compose.yml up -d backend
+
+      # Esperar a que el backend responda (cambiá el path si tu health es otro)
+      - name: Wait for backend
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8000/health > /dev/null; then
+              echo "Backend is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend not ready"
+          docker logs cta_backend --tail=200 || true
+          exit 1
+
+      # Ejecutar k6
       - name: Run k6 (load listings)
         uses: grafana/k6-action@v0.3.1
         with:
           filename: k6/load-listings.js
-          # Pasamos variables y exportamos summary.json para inspección
+          # Pasamos la URL base al script de k6 como variable de entorno
           flags: >
-            --env API_BASE_URL=${{ env.API_BASE_URL }}
+            --env API_BASE_URL=http://localhost:8000/api/v1
             --summary-export=summary.json
 
-      # Subí el summary como artefacto (útil para mirar métricas post-run)
+      # Subir el summary como artefacto
       - name: Upload k6 summary
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: k6-summary
           path: summary.json
+
+      # Bajar los servicios y limpiar
+      - name: Down compose
+        if: always()
+        run: docker compose -f devops/compose.yml down -v
