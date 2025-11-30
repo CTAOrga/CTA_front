@@ -21,7 +21,6 @@ export default function CreateInventoryItemAgency() {
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
   const [quantity, setQuantity] = useState("1");
-  const [isUsed, setIsUsed] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -51,7 +50,6 @@ export default function CreateInventoryItemAgency() {
         brand: brand,
         model: model,
         quantity: quantity ? Number(quantity) : 0,
-        is_used: isUsed,
       });
       navigate("/agencies/inventory");
     } catch (err) {
@@ -138,17 +136,6 @@ export default function CreateInventoryItemAgency() {
             fullWidth
             size='small'
           />
-
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={isUsed}
-                onChange={(e) => setIsUsed(e.target.checked)}
-              />
-            }
-            label='Es usado'
-          />
-
           <Stack direction='row' spacing={2} sx={{ mt: 2 }}>
             <Button variant='contained' onClick={handleSave} disabled={saving}>
               {saving ? "Guardando..." : "Crear"}
