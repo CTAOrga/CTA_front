@@ -67,6 +67,7 @@ export default function BuyerHomeListings() {
       setError('"min_price" no puede ser mayor que "max_price"');
       setRows([]);
       setTotal(0);
+      setLoading(false);
       return;
     }
 
@@ -81,7 +82,7 @@ export default function BuyerHomeListings() {
         min_price: minPrice || "",
         max_price: maxPrice || "",
         sort,
-        page: page + 1, // backend 1-based
+        page: page + 1,
         page_size: pageSize,
       });
       const arr = asArray(data);
