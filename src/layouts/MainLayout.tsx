@@ -1,4 +1,3 @@
-// src/layouts/MainLayout.jsx
 import React from "react";
 import {
   AppBar,
@@ -25,9 +24,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import PeopleIcon from "@mui/icons-material/People";
 import LightModeIcon from "@mui/icons-material/LightMode";
-import Inventory2Icon from "@mui/icons-material/Inventory2";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
-import AddBoxIcon from "@mui/icons-material/AddBox";
 import CarRentalIcon from "@mui/icons-material/CarRental";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -182,12 +179,6 @@ export default function MainLayout({
             </ListItemButton>
           </>
         )}
-        <ListItemButton component={RouterLink} to='/about'>
-          <ListItemIcon>
-            <InfoIcon />
-          </ListItemIcon>
-          <ListItemText primary='Acerca' />
-        </ListItemButton>
       </List>
       <Box sx={{ flexGrow: 1 }} />
       {/* Footer del sidebar: toggle de tema + versión */}

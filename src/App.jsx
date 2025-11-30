@@ -1,10 +1,8 @@
 import "./App.css";
 import Home from "./pages/Home";
-import About from "./pages/About";
 import MainLayout from "./layouts/MainLayout";
 import ThemeController from "./theme/ThemeController";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import AuthProvider from "./infra/AuthContext.jsx";
 import useAuth from "./infra/useAuth.js";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
@@ -49,7 +47,6 @@ function App() {
             <MainLayout mode={mode} toggleMode={toggleMode} title='CTA'>
               <Routes>
                 <Route path='/' element={<Home />} />
-                <Route path='/about' element={<About />} />
                 <Route path='/login' element={<Login />} />
                 <Route path='/register' element={<Register />} />
                 <Route

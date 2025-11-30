@@ -10,8 +10,36 @@ export async function createPurchase({ listingId, quantity = 1 }) {
 }
 
 // Listar compras del comprador logueado
-export async function getMyPurchases() {
-  const { data } = await http.get("/purchases/my");
+export async function getMyPurchases({
+  status,
+  listingId,
+  minQty,
+  maxQty,
+  minPrice,
+  maxPrice,
+} = {}) {
+  const params = {};
+
+  if (status && status !== "all") {
+    params.status = status; // "active" | "cancelled"
+  }
+  if (listingId) {
+    params.listing_id = listingId;
+  }
+  if (minQty) {
+    params.min_qty = minQty;
+  }
+  if (maxQty) {
+    params.max_qty = maxQty;
+  }
+  if (minPrice) {
+    params.min_price = minPrice;
+  }
+  if (maxPrice) {
+    params.max_price = maxPrice;
+  }
+
+  const { data } = await http.get("/purchases/my", { params });
   return data;
 }
 
