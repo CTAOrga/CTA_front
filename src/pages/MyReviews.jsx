@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Typography,
   Table,
@@ -10,16 +10,15 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
   Box,
   Rating,
+  Grid,
+  MenuItem,
+  Paper,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
 import { getMyReviews, updateReview } from "../infra/reviewsService.js";
+import ReviewDialog from "../components/ReviewDialog";
 
 export default function MyReviews() {
   const [rows, setRows] = useState([]);
@@ -30,18 +29,44 @@ export default function MyReviews() {
     severity: "success",
   });
 
-  const [editing, setEditing] = useState(null); // { id, rating, comment }
-  const [saving, setSaving] = useState(false);
+  // Filtros
+  const [brandFilter, setBrandFilter] = useState("");
+  const [modelFilter, setModelFilter] = useState("");
+  const [minRatingFilter, setMinRatingFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
-  const navigate = useNavigate();
+  // Diálogo (detalle / edición)
+  const [dialogReview, setDialogReview] = useState(null); // { id, brand, model, rating, comment, ... }
+  const [dialogMode, setDialogMode] = useState("view"); // "view" | "edit"
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     try {
       setLoading(true);
-      const data = await getMyReviews();
-      setRows(data);
+
+      if (dateFrom && dateTo && dateFrom > dateTo) {
+        setRows([]);
+        setSnackbar({
+          open: true,
+          message: '"Desde" no puede ser mayor que "Hasta"',
+          severity: "warning",
+        });
+        return;
+      }
+
+      const data = await getMyReviews({
+        brand: brandFilter || undefined,
+        model: modelFilter || undefined,
+        minRating: minRatingFilter ? Number(minRatingFilter) : undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      });
+
+      setRows(data || []);
     } catch (err) {
       console.error("Error cargando reseñas:", err);
+      setRows([]);
       setSnackbar({
         open: true,
         message:
@@ -55,33 +80,49 @@ export default function MyReviews() {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brandFilter, modelFilter, minRatingFilter, dateFrom, dateTo]);
 
   const handleCloseSnackbar = (_, reason) => {
     if (reason === "clickaway") return;
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
+  const handleClearFilters = () => {
+    setBrandFilter("");
+    setModelFilter("");
+    setMinRatingFilter("");
+    setDateFrom("");
+    setDateTo("");
+  };
+
+  const handleOpenView = (row) => {
+    setDialogMode("view");
+    setDialogReview({
+      ...row,
+      comment: row.comment ?? "",
+    });
+  };
   const handleOpenEdit = (row) => {
-    setEditing({
-      id: row.id,
-      rating: row.rating,
+    setDialogMode("edit");
+    setDialogReview({
+      ...row,
       comment: row.comment ?? "",
     });
   };
 
-  const handleCloseEdit = () => {
-    if (saving) return;
-    setEditing(null);
+  const handleCloseDialog = () => {
+    if (saving && dialogMode === "edit") return;
+    setDialogReview(null);
   };
 
   const handleSaveEdit = async () => {
-    if (!editing || !editing.rating) return;
+    if (!dialogReview || !dialogReview.rating) return;
     try {
       setSaving(true);
-      const updated = await updateReview(editing.id, {
-        rating: editing.rating,
-        comment: editing.comment,
+      const updated = await updateReview(dialogReview.id, {
+        rating: dialogReview.rating,
+        comment: dialogReview.comment,
       });
 
       setRows((prev) =>
@@ -93,7 +134,7 @@ export default function MyReviews() {
         message: "Reseña actualizada",
         severity: "success",
       });
-      setEditing(null);
+      setDialogReview(null);
     } catch (err) {
       console.error("No se pudo actualizar la reseña:", err);
       setSnackbar({
@@ -107,16 +148,7 @@ export default function MyReviews() {
     }
   };
 
-  const goToListingDetail = (listingId, carModelLabel) => {
-    if (listingId) {
-      navigate(`/listings/${listingId}`);
-    } else {
-      // fallback: volvemos al Home con un pequeño filtro textual
-      navigate(`/?q=${encodeURIComponent(carModelLabel)}`);
-    }
-  };
-
-  if (loading) {
+  if (loading && rows.length === 0) {
     return (
       <div
         style={{
@@ -136,6 +168,75 @@ export default function MyReviews() {
       <Typography variant='h4' gutterBottom>
         Mis reseñas
       </Typography>
+
+      <Paper variant='outlined' sx={{ p: 2, mb: 2 }}>
+        <Grid container spacing={1.5}>
+          <Grid item xs={12} md={3}>
+            <TextField
+              label='Marca'
+              value={brandFilter}
+              onChange={(e) => setBrandFilter(e.target.value)}
+              fullWidth
+              size='small'
+              placeholder='Fiat, VW...'
+            />
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <TextField
+              label='Modelo'
+              value={modelFilter}
+              onChange={(e) => setModelFilter(e.target.value)}
+              fullWidth
+              size='small'
+              placeholder='Gol, Onix...'
+            />
+          </Grid>
+          <Grid item xs={6} md={2}>
+            <TextField
+              select
+              label='Puntaje mínimo'
+              value={minRatingFilter}
+              onChange={(e) => setMinRatingFilter(e.target.value)}
+              fullWidth
+              size='small'
+            >
+              <MenuItem value=''>Todos</MenuItem>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <MenuItem key={n} value={n}>
+                  {n} ⭐ o más
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={6} md={2}>
+            <TextField
+              type='date'
+              label='Desde'
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              fullWidth
+              size='small'
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={6} md={2}>
+            <TextField
+              type='date'
+              label='Hasta'
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              fullWidth
+              size='small'
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12} md='auto'>
+            <Button variant='outlined' onClick={handleClearFilters}>
+              Limpiar filtros
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
 
       {rows.length === 0 ? (
         <Typography>
@@ -174,7 +275,7 @@ export default function MyReviews() {
                       size='small'
                       variant='outlined'
                       sx={{ mr: 1, mb: 0.5 }}
-                      onClick={() => goToListingDetail(r.listing_id, label)}
+                      onClick={() => handleOpenView(r)}
                     >
                       Ver detalle
                     </Button>
@@ -193,57 +294,20 @@ export default function MyReviews() {
         </Table>
       )}
 
-      {/* Diálogo de edición */}
-      <Dialog
-        open={!!editing}
-        onClose={handleCloseEdit}
-        fullWidth
-        maxWidth='sm'
-      >
-        <DialogTitle>Editar reseña</DialogTitle>
-        <DialogContent dividers>
-          {editing && (
-            <Box sx={{ mt: 1 }}>
-              <Typography variant='subtitle2' sx={{ mb: 1 }}>
-                Puntaje
-              </Typography>
-              <Rating
-                value={editing.rating}
-                onChange={(_, value) =>
-                  setEditing((prev) => ({ ...prev, rating: value }))
-                }
-              />
-              <Typography variant='subtitle2' sx={{ mt: 2, mb: 1 }}>
-                Comentario
-              </Typography>
-              <TextField
-                fullWidth
-                multiline
-                minRows={3}
-                value={editing.comment}
-                onChange={(e) =>
-                  setEditing((prev) => ({
-                    ...prev,
-                    comment: e.target.value,
-                  }))
-                }
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEdit} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSaveEdit}
-            disabled={saving || !editing?.rating}
-            variant='contained'
-          >
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ReviewDialog
+        open={!!dialogReview}
+        mode={dialogMode}
+        review={dialogReview}
+        saving={saving}
+        onClose={handleCloseDialog}
+        onSave={handleSaveEdit}
+        onChangeRating={(value) =>
+          setDialogReview((prev) => (prev ? { ...prev, rating: value } : prev))
+        }
+        onChangeComment={(value) =>
+          setDialogReview((prev) => (prev ? { ...prev, comment: value } : prev))
+        }
+      />
 
       <Snackbar
         open={snackbar.open}
