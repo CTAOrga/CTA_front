@@ -25,7 +25,6 @@ export default function InventoryListAgency() {
 
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
-  const [usedFilter, setUsedFilter] = useState("all"); // all | used | new
 
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -39,16 +38,11 @@ export default function InventoryListAgency() {
     setLoading(true);
     setError(null);
     try {
-      let is_used = undefined;
-      if (usedFilter === "used") is_used = true;
-      if (usedFilter === "new") is_used = false;
-
       const data = await getMyInventory({
         page: page + 1,
         pageSize,
         brand: brand || undefined,
         model: model || undefined,
-        is_used,
       });
 
       setRows(Array.isArray(data.items) ? data.items : []);
@@ -66,12 +60,11 @@ export default function InventoryListAgency() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, brand, model, usedFilter]);
+  }, [page, pageSize, brand, model]);
 
   const handleClear = () => {
     setBrand("");
     setModel("");
-    setUsedFilter("all");
     setPage(0);
     setPageSize(20);
   };
@@ -125,21 +118,6 @@ export default function InventoryListAgency() {
             }}
             size='small'
           />
-          <TextField
-            select
-            label='Estado'
-            value={usedFilter}
-            onChange={(e) => {
-              setUsedFilter(e.target.value);
-              setPage(0);
-            }}
-            size='small'
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value='all'>Todos</MenuItem>
-            <MenuItem value='used'>Usados</MenuItem>
-            <MenuItem value='new'>0 km</MenuItem>
-          </TextField>
 
           <Button variant='outlined' onClick={handleClear}>
             Limpiar
@@ -170,7 +148,6 @@ export default function InventoryListAgency() {
               <TableRow>
                 <TableCell>Marca</TableCell>
                 <TableCell>Modelo</TableCell>
-                <TableCell>Estado</TableCell>
                 <TableCell align='right'>Cantidad</TableCell>
                 <TableCell align='center'>Acciones</TableCell>
               </TableRow>
@@ -189,13 +166,7 @@ export default function InventoryListAgency() {
                   <TableRow key={row.id} hover>
                     <TableCell>{row.brand}</TableCell>
                     <TableCell>{row.model}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={row.is_used ? "Usado" : "0 km"}
-                        size='small'
-                        color={row.is_used ? "default" : "success"}
-                      />
-                    </TableCell>
+
                     <TableCell align='right'>{row.quantity}</TableCell>
                     <TableCell align='center'>
                       <Button

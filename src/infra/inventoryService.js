@@ -1,12 +1,10 @@
 import http from "./http";
 
-// Lista inventario de la agencia logueada (paginado + filtros)
 export async function getMyInventory({
   page = 1,
   pageSize = 20,
   brand,
   model,
-  is_used,
 } = {}) {
   const params = {
     page,
@@ -15,7 +13,6 @@ export async function getMyInventory({
 
   if (brand) params.brand = brand;
   if (model) params.model = model;
-  if (typeof is_used === "boolean") params.is_used = is_used;
 
   const { data } = await http.get("/inventory", { params });
   return data; // { items, total, page, page_size }
