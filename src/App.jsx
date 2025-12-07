@@ -24,6 +24,8 @@ import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminFavorites from "./pages/AdminFavorites";
 import AdminReviews from "./pages/AdminReviews";
 import AdminPurchases from "./pages/AdminPurchases";
+import ForbiddenPage from "./pages/ForbiddenPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
   const { isAuthenticated, roles = [] } = useAuth() ?? {};
@@ -49,6 +51,7 @@ function App() {
                 <Route path='/' element={<Home />} />
                 <Route path='/login' element={<Login />} />
                 <Route path='/register' element={<Register />} />
+                <Route path='/403' element={<ForbiddenPage />} />
                 <Route
                   path='/agencies/listings/:id'
                   element={
@@ -187,6 +190,7 @@ function App() {
                     </RequireAuth>
                   }
                 />
+                <Route path='*' element={<NotFoundPage />} />
               </Routes>
             </MainLayout>
           </BrowserRouter>
