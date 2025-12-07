@@ -150,7 +150,11 @@ export default function BuyerHomeListings() {
               fullWidth
               size='small'
               placeholder='Fiat, Gol, etc.'
-              inputProps={{ "data-testid": "input-q" }}
+              slotProps={{
+                htmlInput: {
+                  "data-testid": "input-q",
+                },
+              }}
             />
           </Grid>
           <Grid item xs={6} md={2}>
