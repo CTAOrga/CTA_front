@@ -247,7 +247,7 @@ export default function MyFavorites() {
           </TableHead>
           <TableBody>
             {rows.map((f) => (
-              <TableRow key={f.favorite_id}>
+              <TableRow key={f.favorite_id} data-testid='row-favorite'>
                 <TableCell>
                   {f.brand} {f.model}
                 </TableCell>

@@ -59,3 +59,5 @@ test-results/
 # --- TypeScript artifacts (in case se agrega TS luego) ---
 *.tsbuildinfo
 
+cypress.env.json
+
