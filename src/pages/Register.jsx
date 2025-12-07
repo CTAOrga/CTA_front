@@ -35,15 +35,25 @@ export default function Register() {
             label='Email'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            slotProps={{
+              htmlInput: { "data-testid": "register-email" },
+            }}
           />
           <TextField
             label='Password'
             type='password'
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            slotProps={{
+              htmlInput: { "data-testid": "register-password" },
+            }}
           />
           {error && <Typography color='error'>{error}</Typography>}
-          <Button type='submit' variant='contained'>
+          <Button
+            type='submit'
+            variant='contained'
+            data-testid='register-submit'
+          >
             Registrarme
           </Button>
         </Stack>
