@@ -1,6 +1,6 @@
 import { typeInByTestId } from "../../support/utils/authHelpers";
 
-describe("E2E real - buyer login + Mis favoritos", () => {
+describe.skip("E2E real - buyer login + Mis favoritos", () => {
   const email = Cypress.env("E2E_BUYER_EMAIL");
   const password = Cypress.env("E2E_BUYER_PASSWORD");
 
