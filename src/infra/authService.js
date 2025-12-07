@@ -72,5 +72,5 @@ export function getSession() {
   const d = decodeToken();
   console.log("getSession decoded:", d);
   if (!d) return null;
-  return { user: { id: d.sub }, roles: [d.roles], exp: d.exp };
+  return { user: { id: d.sub }, roles: normalizeRoles(d.roles), exp: d.exp };
 }

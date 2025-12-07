@@ -4,7 +4,7 @@ import { createJwt } from "../../support/utils/authHelpers";
 // Verifican que RequireAuth proteja las rutas según el rol.
 
 describe("AuthGuard / RequireAuth", () => {
-  it("usuario no autenticado que visita /my-favorites es redirigido a /login", () => {
+  it("usuario no autenticado que visita /my-reviews es redirigido a /login", () => {
     cy.visit("/logout");
     cy.clearLocalStorage();
 
@@ -14,29 +14,12 @@ describe("AuthGuard / RequireAuth", () => {
     cy.contains("Iniciar sesión").should("be.visible");
   });
 
-  it("usuario no autenticado que visita /admin/reports es redirigido a /login", () => {
+  it("usuario no autenticado que visita /admin/favorites es redirigido a /login", () => {
     cy.clearLocalStorage();
     cy.visit("/admin/favorites");
 
     cy.url().should("include", "/login");
     cy.contains("Iniciar sesión").should("be.visible");
-  });
-
-  it("usuario buyer NO puede ver /admin/reports aunque esté logueado", () => {
-    const session = {
-      access_token: "dummy",
-      role: "buyer",
-      roles: ["buyer"],
-      isAuthenticated: true,
-      agency_id: null,
-    };
-    localStorage.setItem("session", JSON.stringify(session));
-    localStorage.setItem("roles", JSON.stringify(["buyer"]));
-
-    cy.visit("/admin/reviews");
-
-    cy.url().should("not.include", "/admin/reviews");
-    cy.url().should("include", "/login");
   });
 });
 
@@ -64,5 +47,31 @@ describe("Routing - 404", () => {
 
     cy.url().should("include", "/403");
     cy.contains("No tenés permisos").should("be.visible");
+  });
+});
+
+describe("Admin access", () => {
+  it("usuario admin autenticado puede ver /admin/favorites", () => {
+    const token = createJwt({ sub: "1", roles: ["admin"] });
+
+    cy.intercept("GET", "**/api/v1/admin/favorites*", {
+      statusCode: 200,
+      body: {
+        items: [],
+        total: 0,
+      },
+    }).as("getAdminFavorites");
+
+    cy.visit("/admin/favorites", {
+      onBeforeLoad(win) {
+        win.localStorage.setItem("access_token", token);
+      },
+    });
+
+    cy.wait("@getAdminFavorites");
+
+    cy.url().should("include", "/admin/favorites");
+    cy.contains("Autos de interés guardados").should("be.visible");
+    cy.contains("Nueva agencia").should("be.visible");
   });
 });
