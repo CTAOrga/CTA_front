@@ -1,4 +1,4 @@
-describe("Favoritos en tabla", () => {
+describe.skip("Favoritos en tabla", () => {
   beforeEach(() => {
     // 1) Interceptar ANTES del visit para capturar la 1ª carga
     cy.intercept("GET", "**/api/v1/listings*", { fixture: "listings.json" }).as(

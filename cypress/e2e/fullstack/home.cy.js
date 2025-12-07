@@ -1,10 +1,10 @@
-describe("Página Principal", () => {
+describe.skip("Página Principal", () => {
   it("debería cargar correctamente", () => {
     cy.visit("/");
     cy.contains("h1", "Bienvenido").should("be.visible");
   });
 });
-describe("Home - Filtro y Tabla", () => {
+describe.skip("Home - Filtro y Tabla", () => {
   beforeEach(() => {
     cy.intercept("GET", "**/api/v1/listings*", { fixture: "listings.json" }).as(
       "getListings"

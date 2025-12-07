@@ -33,15 +33,21 @@ export default function Login() {
             label='Email'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            slotProps={{
+              htmlInput: { "data-testid": "login-email" },
+            }}
           />
           <TextField
             label='Password'
             type='password'
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            slotProps={{
+              htmlInput: { "data-testid": "login-password" },
+            }}
           />
           {error && <Typography color='error'>{error}</Typography>}
-          <Button type='submit' variant='contained'>
+          <Button type='submit' variant='contained' data-testid='login-submit'>
             Entrar
           </Button>
         </Stack>

@@ -217,6 +217,7 @@ export default function MainLayout({
         position='fixed'
         color='primary'
         enableColorOnDark
+        data-testid='top-app-bar'
         sx={{
           zIndex: (t) => t.zIndex.drawer + 1,
           transition: (t) =>
