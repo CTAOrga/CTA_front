@@ -33,21 +33,10 @@ jobs:
       - name: Up backend
         run: docker compose -f devops/compose.yml up -d backend
 
-      - name: Wait for backend
-        run: |
-          echo "Waiting for backend to be ready..."
-          timeout 60s bash -c 'until curl -fsS http://127.0.0.1:8000 > /dev/null; do sleep 2; done' || (docker logs cta_backend && exit 1)
-          echo "Backend is up"
-
       # Ejecutar k6
-      - name: Setup k6
-        uses: grafana/setup-k6-action@v1
-
       - name: Run k6 (load listings)
         run: |
-          k6 run k6/spyke-listings.js \
-            --env API_BASE_URL=http://127.0.0.1:8000/api/v1 \
-            --summary-export=summary.json
+          docker compose -f devops/compose.yml run k6 run /k6/spyke-listings.js --summary-export=summary.json
 
       # Subir el summary como artefacto
       - name: Upload k6 summary
@@ -56,6 +45,10 @@ jobs:
         with:
           name: k6-summary
           path: summary.json
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose -f devops/compose.yml logs backend
 
       # Bajar los servicios y limpiar
       - name: Down compose

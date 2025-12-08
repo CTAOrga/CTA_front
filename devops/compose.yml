@@ -9,7 +9,7 @@ services:
       - APP_NAME=CTABackend
       - APP_VERSION=0.1.0
       - APP_ENV=development
-      - CORS_ORIGINS=http://localhost,http://127.0.0.1
+      - CORS_ORIGINS=http://localhost,http://127.0.0.1,http://k6-runner
       - SECRET_KEY=supersecretkey
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
       - TOKEN_ALGORITHM=HS256
@@ -40,6 +40,16 @@ services:
       retries: 30
       start_period: 20s
       timeout: 3s
+
+  k6:
+    image: grafana/k6:latest
+    container_name: k6-runner
+    networks:
+      - k6_network
+    volumes:
+      - ../k6:/k6
+    environment:
+      - API_BASE_URL=http://cta_backend:8000/api/v1
 
 volumes:
   mysql-data:
