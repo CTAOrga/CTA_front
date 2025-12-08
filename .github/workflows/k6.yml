@@ -33,28 +33,20 @@ jobs:
       - name: Up backend
         run: docker compose -f devops/compose.yml up -d backend
 
-      # Esperar a que el backend responda (cambiá el path si tu health es otro)
       - name: Wait for backend
         run: |
-          for i in {1..30}; do
-            if curl -fsS http://localhost:8000/health > /dev/null; then
-              echo "Backend is up"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Backend not ready"
-          docker logs cta_backend --tail=200 || true
-          exit 1
+          echo "Waiting for backend to be ready..."
+          timeout 60s bash -c 'until curl -fsS http://127.0.0.1:8000/api/v1 > /dev/null; do sleep 2; done' || (docker logs cta_backend && exit 1)
+          echo "Backend is up"
 
       # Ejecutar k6
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
       - name: Run k6 (load listings)
-        uses: grafana/k6-action@v0.3.1
-        with:
-          filename: k6/load-listings.js
-          # Pasamos la URL base al script de k6 como variable de entorno
-          flags: >
-            --env API_BASE_URL=http://localhost:8000/api/v1
+        run: |
+          k6 run k6/spyke-listings.js \
+            --env API_BASE_URL=http://127.0.0.1:8000/api/v1 \
             --summary-export=summary.json
 
       # Subir el summary como artefacto
