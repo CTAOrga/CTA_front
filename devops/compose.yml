@@ -1,0 +1,48 @@
+services:
+  backend:
+    image: cuococarlos/cta_backend_2025_grupo_1:latest
+    container_name: cta_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql+pymysql://appuser:AppPass!123@mysql:3306/appdb
+      - APP_NAME=CTABackend
+      - APP_VERSION=0.1.0
+      - APP_ENV=development
+      - CORS_ORIGINS=http://localhost,http://127.0.0.1
+      - SECRET_KEY=supersecretkey
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - TOKEN_ALGORITHM=HS256
+    networks:
+      - k6_network
+    depends_on:
+      - mysql
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0.19
+    container_name: mysql-container
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: appdb
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: "AppPass!123"
+    networks:
+      - k6_network
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -proot --silent"]
+      interval: 5s
+      retries: 30
+      start_period: 20s
+      timeout: 3s
+
+volumes:
+  mysql-data:
+
+networks:
+  k6_network:
