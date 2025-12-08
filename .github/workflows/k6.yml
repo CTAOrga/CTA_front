@@ -36,7 +36,7 @@ jobs:
       - name: Wait for backend
         run: |
           echo "Waiting for backend to be ready..."
-          timeout 60s bash -c 'until curl -fsS http://127.0.0.1:8000/api/v1 > /dev/null; do sleep 2; done' || (docker logs cta_backend && exit 1)
+          timeout 60s bash -c 'until curl -fsS http://127.0.0.1:8000 > /dev/null; do sleep 2; done' || (docker logs cta_backend && exit 1)
           echo "Backend is up"
 
       # Ejecutar k6
