@@ -98,7 +98,7 @@ npm run dev -- --port 5174
 
 ## 🧪 Tests E2E con Cypress
 
-- **Este proyecto incluye pruebas end-to-end (E2E) con Cypress**  
+- **Este proyecto incluye pruebas end-to-end (E2E) con Cypress**
 
 <h2>Requisitos</h2>
 
@@ -112,8 +112,9 @@ npm run dev
 npm run build && npm run preview
 
 ```
-> Nota (preview): las variables VITE_* se toman en tiempo de build.
-Si cambiás .env.production, ejecutá otra vez:
+
+> Nota (preview): las variables VITE\_\* se toman en tiempo de build.
+> Si cambiás .env.production, ejecutá otra vez:
 
 ```bash
 npm run build && npm run preview
@@ -122,12 +123,14 @@ npm run build && npm run preview
 <h2>Ejecutar Cypress</h2>
 
 UI interactiva
+
 ```bash
 npm run cy:open
 ```
-Abre el runner de Cypress y elegí los specs desde la interfaz.  
 
-<h2>Headless (terminal)</h2>  
+Abre el runner de Cypress y elegí los specs desde la interfaz.
+
+<h2>Headless (terminal)</h2>
 
 ```bash
 # Todos los tests E2E
@@ -155,6 +158,7 @@ rmdir /s /q node_modules
 del package-lock.json
 npm install
 ```
+
 - **macOS/Linux**
 
 ```bash
@@ -163,13 +167,14 @@ rm -rf node_modules package-lock.json
 npm install
 
 ```
+
 ---
 
 ## 💥 Tests de carga - Grafana - K6
 
 ### Requisitos (instalación para correr local)
 
- > Requiere k6 instalado (winget/choco) y tu backend corriendo.
+> Requiere k6 instalado (winget/choco) y tu backend corriendo.
 
 #### Windows (Powershell):
 
@@ -183,7 +188,9 @@ choco install k6 -y
 #Con Scoop
 scoop install k6
 ```
+
 #### Linux
+
 #### Debian / Ubuntu
 
 ```
@@ -193,6 +200,7 @@ echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.i
 
 sudo apt update && sudo apt install -y k6
 ```
+
 #### macOS
 
 ```
@@ -211,11 +219,34 @@ k6 version
 #### Windows (Powershell)
 
 ```
-# 1) Setear la base de tu API (ajustá el puerto/host si hace falta)
+# 1) Setear la base de tu API (ajustá el puerto/host si hace falta). En los secrets de github debe ir contra la conf. que tenga la db que usamos normalmente
 $env:API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 
-# 2) Ejecutar el test (con export de resumen en json)
+# 2) Tokens de usuarios (deben ser tokens validos)
+$env:ADMIN_TOKEN = "JWT_DE_USER_ADMIN"
+
+# 3) Ejecutar el test (con export de resumen en json)
+
 k6 run --summary-export=summary.json .\k6\load-listings.js
+
+k6 run --summary-export=summary-load-listings.json k6/load-listings.js
+
+k6 run --summary-export=summary-spyke-listings.json k6/spyke-listings.js
+
+k6 run --summary-export=summary-stress-listings.json .\k6\stress-listings.js
+
+k6 run --summary-export=summary-admin-reports.json .\k6\stress-admin-reports.js
+
+```
+
+```
+# 2) Tokens de usuarios (deben ser validos en la db de pruebas => mirar el seed en seed/perf.py; ademas hacer un login desde swagger para obtener los tokens)
+$env:AGENCY_TOKEN = "JWT_DE_agency_perf"
+$env:BUYER_TOKEN  = "JWT_DE_buyer_perf"
+# 3) Este test debe correr contra la db de pruebas (cta_perf), no correrlo contra la de demo. Mirar el README del back => "Levantar db pruebas". En los secrets de github debe ir contra la conf. que tenga la db de pruebas
+$env:API_BASE_URL_PERF = "http://127.0.0.1:8000/api/v1"
+k6 run --summary-export=summary-stress-purchases.json .\k6\stress-purchases.js
+
 ```
 
 #### Linux / macOS (Bash)
@@ -225,7 +256,7 @@ k6 run --summary-export=summary.json .\k6\load-listings.js
 API_BASE_URL=http://127.0.0.1:8000/api/v1
 
 # 2) Ejecutar el test (con export de resumen en json)
-k6 run --summary-export=summary.json k6/load-listings.js
+k6 run --summary-export=summary-load-listings.json k6/load-listings.js
 ```
 
 ---
@@ -322,7 +353,6 @@ Agregá en `package.json` para evitar que otros levanten el proyecto con Node in
 npm i @mui/material @emotion/react @emotion/styled @mui/icons-material react-router-dom
 ```
 
-
 ## Build y ejecucion de imagen con Just
 
 - [Just](https://github.com/casey/just#installation) - Ejecutor de comandos similar a Make
@@ -338,11 +368,13 @@ just build [backend_url]
 ```
 
 **Parámetros:**
+
 - `backend_url` (opcional): URL del backend API
   - **Valor por defecto:** `http://cta_backend:8000`
 
 **Ejemplos:**
-```bash
+
+````bash
 # Usar el valor por defecto
 just build
 
@@ -357,15 +389,17 @@ Ejecuta el contenedor del frontend en el puerto especificado.
 
 ```bash
 just run [port] [imagename]
-```
+````
 
 **Parámetros:**
+
 - `port` (opcional): Puerto donde exponer la aplicación
   - **Valor por defecto:** `80`
 - `imagename` (opcional): Nombre de la imagen a ejecutar
   - **Valor por defecto:** `cta_front`
 
 **Ejemplos:**
+
 ```bash
 # Usar valores por defecto (puerto 80, imagen cta_front)
 just run
@@ -380,6 +414,7 @@ just run "3000" "cta_front:latest"
 ### Flujo de trabajo típico
 
 #### Desarrollo local
+
 ```bash
 # 1. Construir la imagen apuntando al backend local
 just build "http://localhost:8000"
@@ -390,14 +425,11 @@ just run "3000"
 # La aplicación estará disponible en http://localhost:3000
 ```
 
-
-
 #### Variables de entorno
 
 La aplicación utiliza las siguientes variables de entorno durante el build:
 
 - `VITE_API_URL`: URL del backend API (configurada via build argument)
-
 
 ## Notas
 
