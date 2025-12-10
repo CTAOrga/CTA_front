@@ -3,9 +3,9 @@ name: k6 Load Tests
 on:
   workflow_dispatch:
   push:
-    branches: ["main", "k6"]
+    branches: ["main", "k6-fix"]
   pull_request:
-    branches: ["main", "k6"]
+    branches: ["main", "k6-fix"]
 
 jobs:
   k6:
@@ -33,29 +33,10 @@ jobs:
       - name: Up backend
         run: docker compose -f devops/compose.yml up -d backend
 
-      # Esperar a que el backend responda (cambiá el path si tu health es otro)
-      - name: Wait for backend
-        run: |
-          for i in {1..30}; do
-            if curl -fsS http://localhost:8000/health > /dev/null; then
-              echo "Backend is up"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Backend not ready"
-          docker logs cta_backend --tail=200 || true
-          exit 1
-
       # Ejecutar k6
       - name: Run k6 (load listings)
-        uses: grafana/k6-action@v0.3.1
-        with:
-          filename: k6/load-listings.js
-          # Pasamos la URL base al script de k6 como variable de entorno
-          flags: >
-            --env API_BASE_URL=http://localhost:8000/api/v1
-            --summary-export=summary.json
+        run: |
+          docker compose -f devops/compose.yml run k6 run /k6/spyke-listings.js --summary-export=summary.json
 
       # Subir el summary como artefacto
       - name: Upload k6 summary
@@ -64,6 +45,10 @@ jobs:
         with:
           name: k6-summary
           path: summary.json
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose -f devops/compose.yml logs backend
 
       # Bajar los servicios y limpiar
       - name: Down compose
