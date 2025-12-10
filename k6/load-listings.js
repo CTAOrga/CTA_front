@@ -17,6 +17,8 @@ export const options = {
 };
 
 // 2) Base URL de la API (parametrizada)
+// ⚠️ Este test va contra la BD DEMO (entorno "normal").
+// En CI, el job k6-demo setea API_BASE_URL con la URL del backend DEMO.
 const BASE_URL = __ENV.API_BASE_URL || "http://127.0.0.1:8000/api/v1";
 
 // 3) Algunos términos de búsqueda típicos del catálogo

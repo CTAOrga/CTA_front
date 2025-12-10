@@ -18,7 +18,9 @@ export const options = {
   insecureSkipTLSVerify: true,
 };
 
-// 2) API parametrizada
+// 2) API parametrizada (⚠️ DEMO / BD "normal")
+// En CI, el job k6-demo setea API_BASE_URL con la URL del backend DEMO.
+// Localmente, si no hay env, cae en localhost.
 const BASE_URL = __ENV.API_BASE_URL || "http://127.0.0.1:8000/api/v1";
 
 // 3) Términos de búsqueda como en el test de carga
@@ -33,7 +35,9 @@ export default function () {
   const pageSize = 20;
 
   let url = `${BASE_URL}/listings?page=${page}&page_size=${pageSize}`;
-  if (q) url += `&q=${encodeURIComponent(q)}`;
+  if (q) {
+    url += `&q=${encodeURIComponent(q)}`;
+  }
 
   // 6) Request
   const res = http.get(url);

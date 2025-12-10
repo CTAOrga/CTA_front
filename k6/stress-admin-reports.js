@@ -1,5 +1,6 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
+import { login } from "./auth.js";
 
 // 1) Escenario de Stress para reportes admin
 export const options = {
@@ -17,9 +18,12 @@ export const options = {
   insecureSkipTLSVerify: true,
 };
 
-// 2) API y token admin parametrizados por variables de entorno
+// 2) API y credenciales admin parametrizadas por variables de entorno
+// ⚠️ Este test va contra la BD DEMO (entorno "normal")
 const BASE_URL = __ENV.API_BASE_URL || "http://127.0.0.1:8000/api/v1";
-const ADMIN_TOKEN = __ENV.ADMIN_TOKEN || "";
+
+const ADMIN_EMAIL = __ENV.ADMIN_EMAIL || "";
+const ADMIN_PASSWORD = __ENV.ADMIN_PASSWORD || "";
 
 // 3) Opcional: distintos rangos de fechas para no siempre pegar igual
 const dateRanges = [
@@ -28,10 +32,38 @@ const dateRanges = [
   { from: "2025-01-01", to: "2025-12-31" },
 ];
 
-export default function () {
-  if (!ADMIN_TOKEN) {
-    // Si te olvidaste de pasar el token, esto te lo va a recordar en el log
-    console.error("ADMIN_TOKEN no definido. Pasalo por variable de entorno.");
+// ----------------------------------------------------------
+// setup(): se ejecuta UNA sola vez antes del escenario.
+// - Hace login del admin y obtiene un access_token fresco.
+// ----------------------------------------------------------
+export function setup() {
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+    throw new Error(
+      "Faltan ADMIN_EMAIL o ADMIN_PASSWORD. Definilos en las variables de entorno."
+    );
+  }
+
+  const adminToken = login({
+    baseUrl: BASE_URL,
+    email: ADMIN_EMAIL,
+    password: ADMIN_PASSWORD,
+  });
+
+  return { adminToken };
+}
+
+// ----------------------------------------------------------
+// default(data): cada VU, cada iteración.
+// - Usa el adminToken para consultar /admin/reports/top-sold-cars
+//   con distintos filtros de fecha.
+// ----------------------------------------------------------
+export default function (data) {
+  const adminToken = data.adminToken;
+
+  if (!adminToken) {
+    console.error(
+      "adminToken no disponible en data. Revisá el setup() de stress-admin-reports.js."
+    );
     return;
   }
 
@@ -48,7 +80,7 @@ export default function () {
 
   // 6) Headers con Authorization
   const headers = {
-    Authorization: `Bearer ${ADMIN_TOKEN}`,
+    Authorization: `Bearer ${adminToken}`,
   };
 
   // 7) Request al endpoint de reporte

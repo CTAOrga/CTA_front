@@ -1,56 +1,66 @@
-name: k6 Load Tests
+name: k6 load tests
 
 on:
-  workflow_dispatch:
   push:
-    branches: ["main", "k6-fix"]
+    branches: [main, develop, k6-fix]
   pull_request:
-    branches: ["main", "k6-fix"]
+    branches: [main, develop, k6-fix]
 
 jobs:
-  k6:
+  # 🌐 Job para entorno DEMO (bd "normal")
+  k6-demo:
     runs-on: ubuntu-latest
 
+    env:
+      # URL del backend DEMO desplegado (antes API_BASE_URL_DEMO)
+      API_BASE_URL: ${{ secrets.API_BASE_URL_DEMO }}
+      # Credenciales del ADMIN en DEMO (para stress-admin-reports)
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL_DEMO }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD_DEMO }}
+
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      # (Opcional) mostrar versiones de Docker/Compose del runner
-      - name: Show Docker versions
+      - name: Set up k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: k6 - load listings
         run: |
-          docker --version
-          docker compose version
+          k6 run --summary-export=summary-load-listings.json k6/load-listings.js
 
-      # Levantar MySQL + Backend con tu compose
-      # Ajustá la ruta si tu compose NO está en devops/compose.yml
-      - name: Up MySQL
-        run: docker compose -f devops/compose.yml up -d mysql
-
-      # Darle aire extra a MySQL (además del healthcheck del compose)
-      - name: Wait MySQL a bit
-        run: sleep 30
-
-      - name: Up backend
-        run: docker compose -f devops/compose.yml up -d backend
-
-      # Ejecutar k6
-      - name: Run k6 (load listings)
+      - name: k6 - spyke listings
         run: |
-          docker compose -f devops/compose.yml run k6 run /k6/spyke-listings.js --summary-export=summary.json
+          k6 run --summary-export=summary-spyke-listings.json k6/spyke-listings.js
 
-      # Subir el summary como artefacto
-      - name: Upload k6 summary
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: k6-summary
-          path: summary.json
+      - name: k6 - stress listings
+        run: |
+          k6 run --summary-export=summary-stress-listings.json k6/stress-listings.js
 
-      - name: Show logs on failure
-        if: failure()
-        run: docker compose -f devops/compose.yml logs backend
+      - name: k6 - stress admin reports
+        run: |
+          k6 run --summary-export=summary-admin-reports.json k6/stress-admin-reports.js
 
-      # Bajar los servicios y limpiar
-      - name: Down compose
-        if: always()
-        run: docker compose -f devops/compose.yml down -v
+  # ⚙️ Job para entorno PERF (bd cta_perf)
+  k6-perf:
+    runs-on: ubuntu-latest
+
+    env:
+      # URL del backend PERF (sembrado con seed_perf)
+      API_BASE_URL: ${{ secrets.API_BASE_URL_PERF }}
+      # Credenciales de los usuarios PERF
+      AGENCY_EMAIL: ${{ secrets.AGENCY_EMAIL_PERF }} # ej: agency_perf@cta.com
+      AGENCY_PASSWORD: ${{ secrets.AGENCY_PASSWORD_PERF }} # ej: Perf1234!
+      BUYER_EMAIL: ${{ secrets.BUYER_EMAIL_PERF }} # ej: buyer_perf@cta.com
+      BUYER_PASSWORD: ${{ secrets.BUYER_PASSWORD_PERF }} # ej: Perf1234!
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: k6 - stress purchases
+        run: |
+          k6 run --summary-export=summary-stress-purchases.json k6/stress-purchases.js

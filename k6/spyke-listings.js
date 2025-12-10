@@ -17,10 +17,12 @@ export const options = {
   insecureSkipTLSVerify: true,
 };
 
-const BASE = __ENV.API_BASE_URL || "http://127.0.0.1:8000/api/v1";
+// ⚠️ Este test va contra la BD DEMO (entorno "normal")
+// En CI, el job k6-demo setea API_BASE_URL con la URL del backend DEMO.
+const BASE_URL = __ENV.API_BASE_URL || "http://127.0.0.1:8000/api/v1";
 
 export default function () {
-  const res = http.get(`${BASE}/listings?page=1&page_size=20`);
+  const res = http.get(`${BASE_URL}/listings?page=1&page_size=20`);
 
   check(res, {
     "status 200": (r) => r.status === 200,

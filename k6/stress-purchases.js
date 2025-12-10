@@ -1,18 +1,21 @@
+// k6/stress-purchases.js
 // ----------------------------------------------------------
 // Stress de COMPRAS construyendo TODO el escenario desde k6:
 // - Lee /car-models para obtener modelos de auto (sembrados en seed_perf).
-// - Con el AGENCY_TOKEN crea items de inventario.
+// - Con el usuario AGENCY (login) crea items de inventario.
 // - Con ese inventario crea listings/ofertas.
-// - Con el BUYER_TOKEN hace compras sobre esos listings bajo carga.
+// - Con el usuario BUYER (login) hace compras sobre esos listings bajo carga.
 //
 // ⚠️ Correr SIEMPRE contra la API que apunta a la BD PERF (cta_perf).
-// ⚠️ Requiere:
-//   - AGENCY_TOKEN (JWT de agency_perf@cta.com)
-//   - BUYER_TOKEN  (JWT de buyer_perf@cta.com)
+// ⚠️ Requiere credenciales:
+//   - AGENCY_EMAIL / AGENCY_PASSWORD
+//   - BUYER_EMAIL  / BUYER_PASSWORD
+//   (tokens se generan en runtime vía /auth/login)
 // ----------------------------------------------------------
 
 import http from "k6/http";
 import { check, sleep } from "k6";
+import { login } from "./auth.js";
 
 export const options = {
   stages: [
@@ -31,12 +34,18 @@ export const options = {
   insecureSkipTLSVerify: true,
 };
 
+// Base URL: en CI vas a pasar API_BASE_URL apuntando a PERF.
+// Localmente podés usar API_BASE_URL_PERF o caer en localhost.
 const BASE_URL =
   __ENV.API_BASE_URL_PERF ||
   __ENV.API_BASE_URL ||
   "http://127.0.0.1:8000/api/v1";
-const AGENCY_TOKEN = __ENV.AGENCY_TOKEN || "";
-const BUYER_TOKEN = __ENV.BUYER_TOKEN || "";
+
+// Credenciales de AGENCY / BUYER (por defecto las de seed_perf)
+const AGENCY_EMAIL = __ENV.AGENCY_EMAIL || "agency_perf@cta.com";
+const AGENCY_PASSWORD = __ENV.AGENCY_PASSWORD || "Perf1234!";
+const BUYER_EMAIL = __ENV.BUYER_EMAIL || "buyer_perf@cta.com";
+const BUYER_PASSWORD = __ENV.BUYER_PASSWORD || "Perf1234!";
 
 const N_MODELS = 3; // cuántos car_models usamos para crear ofertas
 const INVENTORY_QTY = 2200; // cantidad en inventario para cada modelo
@@ -44,26 +53,39 @@ const LISTING_STOCK = 2100; // stock inicial de cada oferta (<= INVENTORY_QTY)
 
 // ----------------------------------------------------------
 // setup(): se ejecuta UNA vez antes de todo el escenario.
-// - Verifica tokens.
+// - Hace login de AGENCY y BUYER, obtiene sus tokens.
 // - Lee car-models.
 // - Crea inventario para algunos car_models.
 // - Crea listings a partir de ese inventario.
-// - Devuelve los IDs de listings para el default().
+// - Devuelve los IDs de listings y el buyerToken para default().
 // ----------------------------------------------------------
 export function setup() {
-  if (!AGENCY_TOKEN || !BUYER_TOKEN) {
+  // 0) Validar credenciales mínimas
+  if (!AGENCY_EMAIL || !AGENCY_PASSWORD || !BUYER_EMAIL || !BUYER_PASSWORD) {
     throw new Error(
-      "AGENCY_TOKEN y/o BUYER_TOKEN no definidos. " +
-        "Definilos en el entorno antes de correr el test."
+      "Faltan AGENCY_EMAIL/AGENCY_PASSWORD o BUYER_EMAIL/BUYER_PASSWORD en el entorno."
     );
   }
 
+  // 1) Login de AGENCY y BUYER contra la API PERF
+  const agencyToken = login({
+    baseUrl: BASE_URL,
+    email: AGENCY_EMAIL,
+    password: AGENCY_PASSWORD,
+  });
+
+  const buyerToken = login({
+    baseUrl: BASE_URL,
+    email: BUYER_EMAIL,
+    password: BUYER_PASSWORD,
+  });
+
   const agencyHeaders = {
-    Authorization: `Bearer ${AGENCY_TOKEN}`,
+    Authorization: `Bearer ${agencyToken}`,
     "Content-Type": "application/json",
   };
 
-  // 1) Leer car-models de la BD PERF (sembrados por seed_perf)
+  // 2) Leer car-models de la BD PERF (sembrados por seed_perf)
   const carModelsRes = http.get(`${BASE_URL}/car-models?page=1&page_size=50`, {
     headers: agencyHeaders,
   });
@@ -86,9 +108,9 @@ export function setup() {
     );
   }
 
-  const selectedModels = carModels.slice(0, 3);
+  const selectedModels = carModels.slice(0, N_MODELS);
 
-  // 2) Crear items de inventario para esos car_models
+  // 3) Crear items de inventario para esos car_models
   const inventoryItems = [];
 
   for (const cm of selectedModels) {
@@ -123,7 +145,7 @@ export function setup() {
     );
   }
 
-  // 3) Crear listings/ofertas para esos items de inventario
+  // 4) Crear listings/ofertas para esos items de inventario
   const listingIds = [];
 
   for (const inv of inventoryItems) {
@@ -134,7 +156,6 @@ export function setup() {
       brand: inv.brand,
       model: inv.model,
       // stock de la oferta: un poco menor que INVENTORY_QTY
-      // para cumplir: payload.stock <= inv.quantity
       stock: Math.min(inv.quantity ?? INVENTORY_QTY, LISTING_STOCK),
       seller_notes: "PERF_K6_STRESS_PURCHASES",
     });
@@ -167,20 +188,24 @@ export function setup() {
     `Listings creados para stress de compras: ${listingIds.join(", ")}`
   );
 
-  return { listingIds };
+  // Devolvemos datos para default():
+  // - ids de listings creados
+  // - token del buyer (para hacer /purchases)
+  return { listingIds, buyerToken };
 }
 
 // ----------------------------------------------------------
 // default(data): ejecutado por cada VU en cada iteración.
 // - Toma un listing_id de los creados en setup().
-// - Hace POST /purchases con quantity=1 usando BUYER_TOKEN.
+// - Hace POST /purchases con quantity=1 usando buyerToken.
 // ----------------------------------------------------------
 export default function (data) {
   const listingIds = data.listingIds || [];
+  const buyerToken = data.buyerToken;
 
-  if (!BUYER_TOKEN) {
+  if (!buyerToken) {
     console.error(
-      "BUYER_TOKEN no definido. Pasalo por variable de entorno (token de buyer_perf)."
+      "buyerToken no disponible en data. Revisá el setup() de stress-purchases.js."
     );
     return;
   }
@@ -201,7 +226,7 @@ export default function (data) {
   });
 
   const headers = {
-    Authorization: `Bearer ${BUYER_TOKEN}`,
+    Authorization: `Bearer ${buyerToken}`,
     "Content-Type": "application/json",
   };
 
