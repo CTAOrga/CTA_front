@@ -1,0 +1,35 @@
+name: k6 load tests
+
+on:
+  push:
+    branches: [main, develop, k6-fix]
+  pull_request:
+    branches: [main, develop, k6-fix]
+
+jobs:
+  k6-demo:
+    runs-on: ubuntu-latest
+    env:
+      API_BASE_URL: ${{ secrets.API_BASE_URL_DEMO }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL_DEMO }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD_DEMO }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - run: k6 run --summary-export=summary-load-listings.json k6/load-listings.js
+      - run: k6 run --summary-export=summary-spyke-listings.json k6/spyke-listings.js
+      - run: k6 run --summary-export=summary-stress-listings.json k6/stress-listings.js
+      - run: k6 run --summary-export=summary-admin-reports.json k6/stress-admin-reports.js
+
+  k6-perf:
+    runs-on: ubuntu-latest
+    env:
+      API_BASE_URL: ${{ secrets.API_BASE_URL_PERF }}
+      AGENCY_EMAIL: ${{ secrets.AGENCY_EMAIL_PERF }}
+      AGENCY_PASSWORD: ${{ secrets.AGENCY_PASSWORD_PERF }}
+      BUYER_EMAIL: ${{ secrets.BUYER_EMAIL_PERF }}
+      BUYER_PASSWORD: ${{ secrets.BUYER_PASSWORD_PERF }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - run: k6 run --summary-export=summary-stress-purchases.json k6/stress-purchases.js
