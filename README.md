@@ -219,32 +219,46 @@ k6 version
 #### Windows (Powershell)
 
 ```
-# 1) Setear la base de tu API (ajustá el puerto/host si hace falta). En los secrets de github debe ir contra la conf. que tenga la db que usamos normalmente
+# 1) Setear la base de tu API (ajustá el puerto/host si hace falta).
+#    Utiliza la base de datos "normal" (de demo).
 $env:API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 
-# 2) Tokens de usuarios (deben ser tokens validos)
-$env:ADMIN_TOKEN = "JWT_DE_USER_ADMIN"
+# 2) Credenciales de un usuario ADMIN que exista en la base de demo.
+#    En local podés usar las que tengas cargadas a mano; en CI se recomienda
+#    guardar ADMIN_EMAIL / ADMIN_PASSWORD como secrets (por ejemplo ADMIN_EMAIL_DEMO, ADMIN_PASSWORD_DEMO).
+$env:ADMIN_EMAIL    = "admin@example.com"
+$env:ADMIN_PASSWORD = "Admin123"
 
-# 3) Ejecutar el test (con export de resumen en json)
+# 3) Ejecutar los tests (con export de resumen en json)
 
-k6 run --summary-export=summary.json .\k6\load-listings.js
-
+# Carga "suave" de listings
 k6 run --summary-export=summary-load-listings.json k6/load-listings.js
 
+# Patrón de tráfico en picos sobre listings
 k6 run --summary-export=summary-spyke-listings.json k6/spyke-listings.js
 
-k6 run --summary-export=summary-stress-listings.json .\k6\stress-listings.js
+# Stress sobre listings
+k6 run --summary-export=summary-stress-listings.json k6/stress-listings.js
 
-k6 run --summary-export=summary-admin-reports.json .\k6\stress-admin-reports.js
+# Stress sobre reportes de admin (requiere ADMIN_EMAIL / ADMIN_PASSWORD válidos)
+k6 run --summary-export=summary-admin-reports.json k6/stress-admin-reports.js
 
 ```
 
 ```
-# 2) Tokens de usuarios (deben ser validos en la db de pruebas => mirar el seed en seed/perf.py; ademas hacer un login desde swagger para obtener los tokens)
-$env:AGENCY_TOKEN = "JWT_DE_agency_perf"
-$env:BUYER_TOKEN  = "JWT_DE_buyer_perf"
-# 3) Este test debe correr contra la db de pruebas (cta_perf), no correrlo contra la de demo. Mirar el README del back => "Levantar db pruebas". En los secrets de github debe ir contra la conf. que tenga la db de pruebas
+# 1) Base de la API PERF (si no seteás nada, cae en http://127.0.0.1:8000/api/v1)
 $env:API_BASE_URL_PERF = "http://127.0.0.1:8000/api/v1"
+
+# 2) Credenciales de los usuarios de perf (coinciden con seed_perf.py por defecto)
+#    Podés omitir estas variables si usás exactamente los valores del seed:
+#    - agency_perf@cta.com / Perf1234!
+#    - buyer_perf@cta.com  / Perf1234!
+$env:AGENCY_EMAIL    = "agency_perf@cta.com"
+$env:AGENCY_PASSWORD = "Perf1234!"
+$env:BUYER_EMAIL     = "buyer_perf@cta.com"
+$env:BUYER_PASSWORD  = "Perf1234!"
+
+# 3) Ejecutar el stress de compras (contra cta_perf)
 k6 run --summary-export=summary-stress-purchases.json .\k6\stress-purchases.js
 
 ```
@@ -252,11 +266,43 @@ k6 run --summary-export=summary-stress-purchases.json .\k6\stress-purchases.js
 #### Linux / macOS (Bash)
 
 ```
-# 1) Base de tu API
-API_BASE_URL=http://127.0.0.1:8000/api/v1
+# 1) Base de tu API (ajustá host/puerto si hace falta).
+#    La base de datos "normal" (de demo).
+export API_BASE_URL="http://127.0.0.1:8000/api/v1"
 
-# 2) Ejecutar el test (con export de resumen en json)
+# 2) Credenciales de un usuario ADMIN que exista en la base de demo.
+#    En CI se recomienda guardar ADMIN_EMAIL / ADMIN_PASSWORD como secrets
+#    (por ejemplo ADMIN_EMAIL_DEMO, ADMIN_PASSWORD_DEMO).
+export ADMIN_EMAIL="admin@example.com"
+export ADMIN_PASSWORD="Admin123"
+
+# 3) Ejecutar los tests (con export de resumen en json)
+
+# Carga "suave" de listings
 k6 run --summary-export=summary-load-listings.json k6/load-listings.js
+
+# Patrón de tráfico en picos sobre listings
+k6 run --summary-export=summary-spyke-listings.json k6/spyke-listings.js
+
+# Stress sobre listings
+k6 run --summary-export=summary-stress-listings.json k6/stress-listings.js
+
+# Stress sobre reportes de admin (requiere ADMIN_EMAIL / ADMIN_PASSWORD válidos)
+k6 run --summary-export=summary-admin-reports.json k6/stress-admin-reports.js
+```
+
+```
+# 1) Base de la API PERF
+export API_BASE_URL_PERF="http://127.0.0.1:8000/api/v1"
+
+# 2) Credenciales (mismas que en seed_perf.py)
+export AGENCY_EMAIL="agency_perf@cta.com"
+export AGENCY_PASSWORD="Perf1234!"
+export BUYER_EMAIL="buyer_perf@cta.com"
+export BUYER_PASSWORD="Perf1234!"
+
+# 3) Ejecutar el test
+k6 run --summary-export=summary-stress-purchases.json k6/stress-purchases.js
 ```
 
 ---
