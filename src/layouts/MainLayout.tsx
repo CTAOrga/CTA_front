@@ -78,7 +78,7 @@ export default function MainLayout({
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <Toolbar>
         <Typography variant='h6' noWrap>
-          CTA Front
+          CTA Presentanción
         </Typography>
       </Toolbar>
       <Divider />
