@@ -258,7 +258,9 @@ $env:AGENCY_PASSWORD = "Perf1234!"
 $env:BUYER_EMAIL     = "buyer_perf@cta.com"
 $env:BUYER_PASSWORD  = "Perf1234!"
 
-# 3) Ejecutar el stress de compras (contra cta_perf)
+# 3) Antes de correr el test hay que setear la bd por la de perf y correr el seed (ver readme del back-k6)
+
+# 4) Ejecutar el stress de compras (contra cta_perf)
 k6 run --summary-export=summary-stress-purchases.json .\k6\stress-purchases.js
 
 ```
