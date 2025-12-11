@@ -25,7 +25,7 @@ jobs:
         with:
           file: Dockerfile
           context: .
-          build-args: |
+          build-args: 
             VITE_API_URL=${{ secrets.VITE_API_URL }}
           push: true
           tags: cuococarlos/cta_frontend_2025_grupo_1:latest
