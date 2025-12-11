@@ -32,7 +32,7 @@ const ROLE_UI = {
   guest: {
     label: "Invitado",
     color: "default",
-    message: "Estás en modo invitado. Iniciá sesión para más funciones.",
+    message: "Estás en modo charlie. Iniciá sesión para más funciones.",
   },
 };
 
